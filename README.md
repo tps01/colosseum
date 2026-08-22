@@ -1,16 +1,13 @@
 # Colosseum Core
 
-The small runtime at the center of Colosseum test automation. It provides:
+Core of the Colosseum test automation framework. It provides:
 
 - command, measurement, and verification decorators
-- TOML configuration and plugin registration contracts
-- single-test and suite runners
-- SQLite evidence, logs, summaries, artifacts, and exit policy
-- desktop GUI runner (customtkinter)
-- modular documentation support
+- TOML configuration and plugin registration
+- test and test suite runners
+- SQLite databse, logs, summaries, and artifacts
+- GUI
 
-Bench protocols, device drivers, host inspection, SSH, and other integrations belong in
-separately installed plugins.
 
 ## Install
 
@@ -18,14 +15,6 @@ separately installed plugins.
 pip install colosseum-core
 ```
 
-Python 3.9+ is supported. For air-gapped hosts, use the parent integration checkout's
-`offline/` wheelhouse tooling (build on a networked twin, install with `--no-index`).
-Linux GUI needs Tk on the host image (`python3-tk` or a Tk-enabled Python)—it is not a
-pip dependency.
-
-Plugins expose namespaces such as `col.acme.*` through the `colosseum.plugins` entry-point
-group. See the [plugin guide](docs/sphinx/source/guides/plugins.rst) and
-[template package](examples/plugins/colosseum_template/).
 
 ## Develop
 

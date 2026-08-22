@@ -1,5 +1,7 @@
 """Colosseum public API."""
 
+from importlib import metadata
+
 from . import config, database
 from .decorators import (
     CommandResult,
@@ -12,7 +14,10 @@ from .decorators import (
 from .plugins.namespace import LazyNamespaceProxy
 from .results import endex
 
-__version__ = "0.15.4"
+try:
+    __version__ = metadata.version("colosseum-core")
+except metadata.PackageNotFoundError:  # pragma: no cover
+    __version__ = "0.0.0"
 
 
 def __getattr__(name: str) -> LazyNamespaceProxy:

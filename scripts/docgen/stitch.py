@@ -36,19 +36,11 @@ def _load_manifests(docgen_root: Path) -> list[dict[str, object]]:
 
 def _package_version(repo_root: Path) -> str:
     try:
-        import colosseum
-
-        return colosseum.__version__
-    except ImportError:
-        import importlib.util
-
-        init_py = repo_root / "colosseum" / "__init__.py"
-        spec = importlib.util.spec_from_file_location("colosseum", init_py)
-        if spec is None or spec.loader is None:
-            return "0.0.0"
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return getattr(module, "__version__", "0.0.0")
+        import tomllib
+    except ModuleNotFoundError:  # pragma: no cover
+        import tomli as tomllib  # type: ignore[no-redef]
+    data = tomllib.loads((repo_root / "pyproject.toml").read_text(encoding="utf-8"))
+    return str(data["project"]["version"])
 
 
 def _write_conf_py(target: Path, repo_root: Path) -> None:
