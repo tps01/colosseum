@@ -12,17 +12,10 @@ The full build additionally requires `latexmk`:
 python scripts/docgen/build_all.py
 ```
 
-The pipeline discovers installed `colosseum.docgen` entry points, stages each
-`DocgenModuleSpec`, generates the plugin configuration reference, stitches guides, and
-invokes Sphinx. A core-only environment documents only core.
+The pipeline copies handwritten guides from `docs/sphinx/source/`, generates the
+bench configuration reference from installed plugins' `ConfigSectionSpec`
+registrations, and invokes Sphinx. A core-only environment documents only core.
 
-Useful phase commands:
-
-```sh
-python scripts/docgen/build_all.py --stage-only
-python scripts/docgen/build_all.py --html-only
-python scripts/docgen/build_all.py --pdf-only
-```
-
-Plugins own their API docs and may join an aggregate build by publishing a
-`colosseum.docgen` entry point.
+Plugins document themselves (README / their own docs). They do not join this
+build. When a plugin is installed during a docs build, its config sections appear
+in the generated bench configuration reference.

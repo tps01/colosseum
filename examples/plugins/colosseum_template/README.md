@@ -17,7 +17,7 @@ Copy `examples/plugins/colosseum_template/` to your own repository or folder. Wo
 Edit `colosseum_template/api.py` (rename the package directory when forking):
 
 - Use `@command` for setup/actions, `@measurement` for evidence, `@verification` for checks (import from `colosseum.decorators`).
-- Set `MeasurementSource(domain="template", ...)` to match your namespace (change `"template"` when forking).
+- Look up prior measurements with `require_context().db.get_measurement(...)` (domain should match your namespace when forking).
 - Log with `get_logger("colosseum.template")` (change `template` when forking). That name is required so lines appear in the run `debug.log`.
 - In test and example scripts use **one keyword argument per `col.*` call** on a single line (Colosseum project style).
 - Replace `# TODO: Your code here` stubs with real logic. Decorators already record API pass/fail; use `_logger.debug(...)` for plugin internals.
@@ -59,12 +59,9 @@ In `pyproject.toml`:
 ```toml
 [project.entry-points."colosseum.plugins"]
 template = "colosseum_template:register"
-
-[project.entry-points."colosseum.docgen"]
-template = "colosseum_template.docgen_entry:spec"
 ```
 
-The entry-point **key** is metadata; the runtime namespace is the string passed to `register_namespace`. Docgen entry points are optional.
+The entry-point **key** is metadata; the runtime namespace is the string passed to `register_namespace`.
 
 Pin `colosseum-core` in `dependencies` when you publish.
 
@@ -113,22 +110,14 @@ python -c "import colosseum as col; col.config.load_config('configs/bench.templa
 
 Requires the compatible `colosseum-core` range declared in this template.
 
-### 8. Optional docgen
-
-Fill in `docgen_entry.py` (`DocgenModuleSpec`). When Colosseum docgen is available:
-
-```powershell
-python scripts/docgen/build_module.py
-```
-
-### 9. Optional tests
+### 8. Optional tests
 
 This stub does **not** ship tests. Add your own `tests/` directory when ready. Patterns:
 
 - Unit: API and verifiers with `unit_runtime_context` (see Colosseum `tests/unit/`).
 - Integration: `ensure_plugins_loaded()` and assert your namespace is registered (see `tests/integration/test_plugin_registry_load.py`).
 
-### 10. Publishing
+### 9. Publishing
 
 Build wheels with `python -m build`. Distribute via your package index or internal wheel
 share. Do not register a namespace already owned by another plugin.
@@ -224,5 +213,4 @@ colosseum_template/
     api.py            # col.template.*
     connections.py    # TODO stubs
     validators.py     # TODO stubs
-    docgen_entry.py   # optional DocgenModuleSpec
 ```

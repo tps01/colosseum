@@ -2,7 +2,7 @@ Measurements, commands, and verifications
 ==========================================
 
 Core records decorated API calls in ``execution.sqlite`` and ``debug.log``.
-Plugin internals should use :func:`colosseum.logging.get_logger` with
+Plugin internals should use ``colosseum.logging.get_logger`` with
 ``colosseum.<namespace>`` (see :doc:`plugins`); those DEBUG lines land in the
 same ``debug.log`` and are distinct from decorator pass/fail records.
 
@@ -21,9 +21,10 @@ the same domain, command, and row index. Use ``multi_row=True`` for indexed seri
 Verifications
 -------------
 
-``@verification`` records ``PASS``, ``FAIL``, or ``ERROR``. A verifier may declare
-``MeasurementSource`` values so missing evidence becomes an explicit ``ERROR`` before
-the verifier body runs.
+``@verification`` records ``PASS``, ``FAIL``, or ``ERROR``. Look up prior
+measurements in the verifier body (for example
+``require_context().db.get_measurement(...)``) and return
+``missing_measurement_result`` when evidence is absent.
 
 Optional verifications may fail without failing the aggregate result.
 

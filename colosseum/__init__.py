@@ -5,7 +5,6 @@ from importlib import metadata
 from . import config, database
 from .decorators import (
     CommandResult,
-    MeasurementSource,
     VerificationResult,
     command,
     measurement,
@@ -35,7 +34,6 @@ __all__ = [
     "measurement",
     "verification",
     "CommandResult",
-    "MeasurementSource",
     "VerificationResult",
     "endex",
 ]

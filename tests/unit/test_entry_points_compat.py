@@ -18,12 +18,6 @@ def test_core_distribution_does_not_declare_runtime_plugins() -> None:
     assert plugin_names == set()
 
 
-def test_colosseum_docgen_entry_points_discoverable() -> None:
-    eps = entry_points_for_group("colosseum.docgen")
-    names = {getattr(ep, "name", None) for ep in eps}
-    assert "colosseum" in names
-
-
 def test_duplicate_plugin_entry_points_are_deduped(monkeypatch) -> None:
     duplicate = SimpleNamespace(name="shared", value="colosseum_shared:register")
     monkeypatch.setattr(

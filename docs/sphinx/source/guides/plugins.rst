@@ -38,7 +38,7 @@ namespaces or config sections raise ``PluginRegistrationError``.
 Logging
 -------
 
-Plugins log through :func:`colosseum.logging.get_logger` with a name under the
+Plugins log through ``colosseum.logging.get_logger`` with a name under the
 ``colosseum`` tree. ``setup_logging`` attaches the run file handler to the
 ``colosseum`` logger, so only that subtree is written to ``debug.log``::
 
@@ -74,8 +74,10 @@ Shutdown hooks registered with ``registry.register_shutdown`` run in reverse ord
 Documentation
 -------------
 
-Plugins may expose a ``colosseum.docgen`` entry point returning ``DocgenModuleSpec``.
-Core documentation discovers those modules only when their distributions are installed.
+Plugins document themselves (README and any project-local docs). Register
+``colosseum.plugins`` only. When your plugin is installed during a core docs
+build, its ``ConfigSectionSpec`` keys appear in the generated bench
+configuration reference.
 
 Source checkouts do not provide entry-point metadata. Use ``pip install -e .`` while
 developing a plugin.

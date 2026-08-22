@@ -16,10 +16,6 @@ dependencies = ["colosseum-core>=0.15,<0.16"]
 # TODO: Replace entry-point key and target module after rename (e.g. acme = "acme_bench:register").
 template = "colosseum_template:register"
 
-[project.entry-points."colosseum.docgen"]
-# TODO: Optional — remove this group if you do not ship docgen.
-template = "colosseum_template.docgen_entry:spec"
-
 [tool.setuptools.packages.find]
 # TODO: Update glob to match your Python package directory name.
 include = ["colosseum_template*"]

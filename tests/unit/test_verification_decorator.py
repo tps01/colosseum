@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import sys
 import types
-from dataclasses import FrozenInstanceError
 from inspect import signature
 
 import pytest
 
-from colosseum.decorators.measurement import measurement
 from colosseum.decorators._common import resolve_domain
 from colosseum.decorators.command import COLOSSEUM_DECORATOR
+from colosseum.decorators.measurement import measurement
 from colosseum.decorators.verification import (
-    MeasurementSource,
     VerificationResult,
     missing_measurement_result,
     verification,
@@ -30,11 +28,6 @@ def _capture_value(*, key: str, value: float) -> float:
     return value
 
 
-@measurement(multi_row=True)
-def _capture_indexed_value(*, key: str, row_index: int) -> int:
-    return row_index
-
-
 @verification()
 def _bool_verify(*, key: str, expected: bool, optional: bool = False) -> bool:
     return expected
@@ -46,14 +39,17 @@ def _raises_verify(*, key: str) -> bool:
 
 
 @pytest.mark.requirement("U-MV-02")
-def test_missing_measurement_source_records_error(ctx) -> None:
-    @verification(sources=[MeasurementSource(domain="equipment", command="measure_voltage")])
-    def needs_measure(*, key: str) -> bool:
-        return True
+def test_missing_measurement_in_body_records_error(ctx) -> None:
+    @verification
+    def needs_measure(*, key: str, optional: bool = False) -> VerificationResult:
+        row = ctx.db.get_measurement("equipment", "measure_voltage", key, row_index=0)
+        if row is None:
+            return missing_measurement_result(key=key, optional=optional)
+        return VerificationResult(status="PASS", message="", optional=optional)
 
     result = needs_measure(key="rail_a")
     assert result.status == "ERROR"
-    assert "Missing measurement source" in result.message
+    assert "no measurement" in result.message
     assert ctx.result_aggregator.overall_pass() is False
 
 
@@ -103,12 +99,6 @@ def test_default_verification_result_is_required() -> None:
     assert VerificationResult(status="PASS").optional is False
 
 
-def test_measurement_source_is_immutable() -> None:
-    source = MeasurementSource(domain="core", command="read")
-    with pytest.raises(FrozenInstanceError):
-        source.domain = "equipment"
-
-
 def test_resolve_domain_maps_plugin_package_attribute(monkeypatch) -> None:
     plugin = types.ModuleType("acme_plugin")
     plugin.__colosseum_domain__ = "acme"  # type: ignore[attr-defined]
@@ -124,33 +114,12 @@ def test_resolve_domain_maps_plugin_package_attribute(monkeypatch) -> None:
     assert resolve_domain(sample) == "core"
 
 
-def test_source_lookup_defaults_to_row_zero(ctx) -> None:
-    _capture_indexed_value(key="series", row_index=1)
-    _capture_indexed_value(key="series", row_index=-1)
-
-    @verification(sources=[MeasurementSource(domain="core", command="_capture_indexed_value")])
-    def needs_default_row(*, key: str) -> bool:
-        return True
-
-    result = needs_default_row(key="series")
-    assert result.status == "ERROR"
-    assert "Missing measurement source" in result.message
-
-
 def test_verification_preserves_wrapped_function_metadata() -> None:
     @verification()
     def named_verification(*, key: str) -> bool:
         return True
 
     assert named_verification.__name__ == "named_verification"
-
-
-def test_sources_must_be_passed_by_keyword() -> None:
-    def bare(*, key: str) -> bool:
-        return True
-
-    with pytest.raises(TypeError):
-        verification(bare, [])
 
 
 def test_missing_measurement_result_defaults_required() -> None:
@@ -162,7 +131,7 @@ def test_missing_measurement_result_defaults_required() -> None:
 def test_verification_overloads_and_annotations() -> None:
     impl = verification.__annotations__
     assert impl["_func"] == "Callable[..., Any] | None"
-    assert impl["sources"] == "Iterable[MeasurementSource] | None"
+    assert "sources" not in impl
 
     if sys.version_info < (3, 11):
         pytest.skip("typing.get_overloads requires Python 3.11+")
@@ -172,7 +141,7 @@ def test_verification_overloads_and_annotations() -> None:
     overloads = get_overloads(verification)
     assert len(overloads) == 2
     for overload in overloads:
-        assert overload.__annotations__["sources"] == "Iterable[MeasurementSource] | None"
+        assert "sources" not in overload.__annotations__
 
 
 def test_decorator_metadata() -> None:
@@ -198,12 +167,15 @@ def test_non_bool_return_becomes_pass_with_message(ctx) -> None:
     assert result.message == "ok"
 
 
-def test_present_source_allows_verification(ctx) -> None:
+def test_verification_reads_prior_measurement(ctx) -> None:
     _capture_value(key="rail", value=3.3)
 
-    @verification(sources=[MeasurementSource(domain="core", command="_capture_value")])
-    def needs_measure(*, key: str) -> bool:
-        return True
+    @verification
+    def needs_measure(*, key: str, optional: bool = False) -> VerificationResult:
+        row = ctx.db.get_measurement("core", "_capture_value", key, row_index=0)
+        if row is None:
+            return missing_measurement_result(key=key, optional=optional)
+        return VerificationResult(status="PASS", message="", optional=optional)
 
     result = needs_measure(key="rail")
     assert result.status == "PASS"

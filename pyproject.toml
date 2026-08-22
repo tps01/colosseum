@@ -34,9 +34,6 @@ markers = [
     "gui: requires display and tkinter",
 ]
 
-[project.entry-points."colosseum.docgen"]
-colosseum = "colosseum.docgen_entry:spec"
-
 [project.scripts]
 colosseum = "colosseum.runner.cli:main"
 

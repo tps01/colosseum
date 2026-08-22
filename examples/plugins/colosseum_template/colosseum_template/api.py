@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from colosseum.decorators import (
-    MeasurementSource,
     VerificationResult,
     command,
     measurement,
@@ -35,7 +34,7 @@ def measure_widget_count(*, device_id: int, key: str) -> float:
     return count
 
 
-@verification(sources=[MeasurementSource(domain="template", command="measure_widget_count")])
+@verification
 def verify_widget_count(
     *,
     key: str,

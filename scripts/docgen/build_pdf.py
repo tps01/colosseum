@@ -1,4 +1,4 @@
-"""Build PDF documentation from a stitched Sphinx source tree."""
+"""Build PDF documentation from a staged Sphinx source tree."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def _find_main_tex(latex_dir: Path) -> Path:
 def build_pdf(*, site_source: Path, latex_dir: Path, repo_root: Path) -> Path:
     """Run ``sphinx-build -b latex`` and ``latexmk``; return path to the PDF.
 
-    :param site_source: Stitched Sphinx source tree.
+    :param site_source: Staged Sphinx source tree.
     :type site_source: Path
     :param latex_dir: LaTeX build output directory.
     :type latex_dir: Path

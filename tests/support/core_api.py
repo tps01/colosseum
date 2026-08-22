@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from colosseum.context import require_context
-from colosseum.decorators import MeasurementSource, VerificationResult, measurement, verification
+from colosseum.decorators import VerificationResult, measurement, verification
 
 
 @measurement
@@ -11,7 +11,7 @@ def measure_value(*, key: str, value: float) -> float:
     return value
 
 
-@verification(sources=[MeasurementSource(domain="core", command="measure_value")])
+@verification
 def verify_value(
     *,
     key: str,
