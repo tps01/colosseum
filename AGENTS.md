@@ -27,7 +27,7 @@ Core tests must run without sibling repositories or first-party plugins installe
 ## Commands
 
 ```sh
-python -m pip install -r requirements-dev.txt
+python -m pip install -e .
 python scripts/run_tests.py
 python scripts/run_static.py
 python tests/regression/run_soak_sim.py --count 5

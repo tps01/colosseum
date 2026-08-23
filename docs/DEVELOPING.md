@@ -9,9 +9,11 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
-python -m pip install -r requirements-dev.txt
+python -m pip install -e .
 ```
 
+That single editable install includes runtime, test, static-analysis, and docs
+tooling.
 ## Checks
 
 ```sh
