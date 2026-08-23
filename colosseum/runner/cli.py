@@ -39,6 +39,8 @@ def _add_common_run_options(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Skip outputs/, debug.log, and on-disk execution.sqlite (utility/script mode)",
     )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="colosseum",

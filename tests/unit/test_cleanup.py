@@ -60,3 +60,18 @@ def test_cleanup_matches_share_ignore_policy(tmp_path):
     assert "share" not in targets
     assert "share/notes.txt" not in targets
     assert "share/python-wheels" in targets
+
+
+def test_cleanup_removes_offline_wheelhouse_and_pytest_cache(tmp_path):
+    _touch(tmp_path / "wheelhouse" / "pkg.whl")
+    _touch(tmp_path / ".pytest_cache" / "v" / "cache")
+    (tmp_path / "pkg-offline-windows-py3.12.zip").write_bytes(b"zip")
+
+    targets = {
+        path.relative_to(tmp_path).as_posix()
+        for path in _collect_paths(tmp_path, keep_venvs=False)
+    }
+
+    assert "wheelhouse" in targets
+    assert ".pytest_cache" in targets
+    assert "pkg-offline-windows-py3.12.zip" in targets

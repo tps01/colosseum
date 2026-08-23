@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from colosseum.decorators import (
-    MeasurementSource,
     VerificationResult,
     command,
     measurement,
     verification,
 )
+from colosseum.logging import get_logger
+
+_logger = get_logger("colosseum.template")
 
 _DEVICE_COUNTS: dict[int, int] = {}
 
@@ -19,18 +21,28 @@ def _device_count(device_id: int) -> int:
 
 @command
 def arm_device(*, device_id: int) -> None:
-    """TODO: Implement setup/action for your device (example command stub)."""
-    _ = device_id
+    """Load the configured device row and prepare it (example command)."""
+    from colosseum.config.loader import ConfigError
+    from colosseum.context import get_context
+
+    ctx = get_context()
+    if ctx.config is None:
+        raise ConfigError("Configuration is not loaded. Call col.config.load_config(...) first.")
+    row = ctx.config.require_item("template.device", device_id)
+    serial = row["serial"]
+    _logger.debug("arm_device device_id=%s serial=%s", device_id, serial)
     # TODO: Your code here — talk to hardware, set GPIO, etc.
 
 
 @measurement
 def measure_widget_count(*, device_id: int, key: str) -> float:
     """Return a simulated widget count for the configured device."""
-    return float(_device_count(device_id))
+    count = float(_device_count(device_id))
+    _logger.debug("measure_widget_count device_id=%s key=%s count=%s", device_id, key, count)
+    return count
 
 
-@verification(sources=[MeasurementSource(domain="template", command="measure_widget_count")])
+@verification
 def verify_widget_count(
     *,
     key: str,
@@ -39,13 +51,21 @@ def verify_widget_count(
     optional: bool = False,
 ) -> VerificationResult:
     """Verify a prior measure_widget_count row."""
-    from colosseum.context import require_context
+    from colosseum.context import get_context
     from colosseum.decorators import missing_measurement_result
 
-    row = require_context().db.get_measurement("template", "measure_widget_count", key, row_index=0)
+    row = get_context().db.get_measurement("template", "measure_widget_count", key, row_index=0)
     if row is None or row.value is None:
+        _logger.debug("verify_widget_count key=%s missing measurement", key)
         return missing_measurement_result(key=key, optional=optional)
     actual = float(row.value)
+    _logger.debug(
+        "verify_widget_count key=%s expected=%s +/- %s actual=%s",
+        key,
+        expected_val,
+        tolerance,
+        actual,
+    )
     if abs(actual - expected_val) <= tolerance:
         return VerificationResult(status="PASS", message="", optional=optional)
     return VerificationResult(

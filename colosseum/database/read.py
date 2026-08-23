@@ -5,9 +5,9 @@ from .records import MeasurementRecord, RunMetadataRecord, VerificationRecord
 
 
 def _ctx() -> RuntimeContext:
-    from ..context import require_context
+    from ..context import get_context
 
-    return require_context()
+    return get_context()
 
 
 _ALLOWED_TABLES = frozenset(

@@ -118,7 +118,7 @@ def apply_raw_config(
     validator_map = {
         spec.dotted_path: ctx.plugin_registry.validators_for(spec.dotted_path) for spec in specs
     }
-    ctx.config_warnings.extend(run_section_validators(normalized, spec_map, validator_map))
+    ctx.config_warnings.extend(run_section_validators(normalized, validator_map))
     if ctx.runtime_ready and ctx.logger is not None:
         for warning in ctx.config_warnings:
             ctx.logger.warning(warning)
@@ -151,8 +151,9 @@ def load_config(path: str | Path, *, no_artifacts: bool = False) -> ConfigStore:
         raise ConfigError(f"Config file not found: {config_path}")
     raw = _load_toml(config_path)
 
-    existing_ctx = get_context()
-    if existing_ctx is None:
+    try:
+        ctx = get_context()
+    except RuntimeError:
         ctx = init_context(
             test_case_name=default_test_name(),
             config_path=config_path,
@@ -160,7 +161,6 @@ def load_config(path: str | Path, *, no_artifacts: bool = False) -> ConfigStore:
             auto_finalize=True,
         )
     else:
-        ctx = existing_ctx
         apply_no_artifacts(ctx, no_artifacts=no_artifacts)
 
     return apply_raw_config(ctx, raw, source_label=str(config_path))
@@ -194,8 +194,15 @@ def get(dotted: str, default: object | None = None) -> object | None:
 
     :raises ConfigError: When configuration has not been loaded and ``default`` is not given.
     """
-    ctx = get_context()
-    if ctx is None or ctx.config is None:
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        if default is not None:
+            return default
+        raise ConfigError(
+            "Configuration is not loaded. Call col.config.load_config(path)."
+        ) from None
+    if ctx.config is None:
         if default is not None:
             return default
         raise ConfigError("Configuration is not loaded. Call col.config.load_config(path).")
@@ -211,5 +218,8 @@ def is_loaded() -> bool:
     :returns: ``True`` when a configuration store is present on the context.
     :rtype: bool
     """
-    ctx = get_context()
-    return ctx is not None and ctx.config is not None
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        return False
+    return ctx.config is not None

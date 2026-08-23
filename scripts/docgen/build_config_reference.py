@@ -95,13 +95,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        help="Default: build/docgen/config_reference.rst",
+        help="Default: build/docgen/site/source/guides/bench_config_reference.rst",
     )
     args = parser.parse_args(argv)
     repo_root = _repo_root()
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
-    output = args.output or (repo_root / "build" / "docgen" / "config_reference.rst")
+    output = args.output or (
+        repo_root / "build" / "docgen" / "site" / "source" / "guides" / "bench_config_reference.rst"
+    )
     path = build_config_reference_rst(output_path=output)
     print(f"Wrote {path}")
     return 0

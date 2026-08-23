@@ -11,7 +11,7 @@ the user explicitly requests it.
 - configuration and plugin contracts
 - test/suite runners and optional GUI
 - SQLite evidence, output paths, artifacts, logging, and summaries
-- modular docgen contracts
+- user documentation (guides + generated config reference)
 
 Device drivers, transports, SSH, host inspection, and bench-specific APIs belong in plugins.
 Core tests must run without sibling repositories or first-party plugins installed.
@@ -40,7 +40,7 @@ PDF documentation additionally requires `latexmk`.
 ## Public behavior
 
 - User import: `import colosseum as col`.
-- Plugins register through `colosseum.plugins`; doc modules use `colosseum.docgen`.
+- Plugins register through `colosseum.plugins`.
 - Plugin namespaces resolve dynamically as `col.<namespace>`.
 - End test scripts with `col.endex()` to finalize evidence and exit consistently.
 - Public APIs and maintainer scripts use Sphinx field-list docstrings.

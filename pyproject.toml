@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "colosseum-core"
-version = "0.15.3"
+version = "0.15.5"
 description = "Colosseum test automation framework (core runtime)"
 requires-python = ">=3.9"
 license = "MIT"
@@ -33,9 +33,6 @@ markers = [
     "requirement(id): traceability to test-plan requirement ID",
     "gui: requires display and tkinter",
 ]
-
-[project.entry-points."colosseum.docgen"]
-colosseum = "colosseum.docgen_entry:spec"
 
 [project.scripts]
 colosseum = "colosseum.runner.cli:main"

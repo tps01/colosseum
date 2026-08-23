@@ -1,0 +1,5 @@
+name = "multi_test_fail_fast_verify"
+fail_fast = true
+setup = []
+tests = ["../scripts/fail_required_verify.py", "../scripts/pass_test.py"]
+teardown = ["../scripts/teardown_ok.py"]

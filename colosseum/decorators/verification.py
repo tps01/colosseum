@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from typing import Any, TypeVar, overload
@@ -15,14 +15,6 @@ from .command import COLOSSEUM_DECORATOR
 
 P = ParamSpec("P")
 R = TypeVar("R")
-
-
-@dataclass(frozen=True)
-class MeasurementSource:
-    """Link a verification to a prior measurement ``domain`` and ``command``."""
-
-    domain: str
-    command: str
 
 
 @dataclass
@@ -54,37 +46,23 @@ def missing_measurement_result(*, key: str, optional: bool = False) -> Verificat
 
 
 @overload
-def verification(
-    func: Callable[P, R],
-    /,
-    *,
-    sources: Iterable[MeasurementSource] | None = None,
-) -> Callable[P, R]: ...
+def verification(func: Callable[P, R], /) -> Callable[P, R]: ...
 
 
 @overload
-def verification(
-    func: None = None,
-    /,
-    *,
-    sources: Iterable[MeasurementSource] | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+def verification(func: None = None, /) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
-def verification(
-    _func: Callable[..., Any] | None = None,
-    *,
-    sources: Iterable[MeasurementSource] | None = None,
-) -> object:
+def verification(_func: Callable[..., Any] | None = None) -> object:
     """Decorator that records verification rows and updates exit aggregation.
 
     Wrapped functions must accept ``key=`` and return :class:`VerificationResult` (or
-    ``bool``). Use ``sources=`` to require measurements before the check runs.
+    ``bool``). Look up prior measurements in the body with
+    ``get_context().db.get_measurement(...)`` and return
+    :func:`missing_measurement_result` when evidence is absent.
 
     :param _func: Function to wrap when used as ``@verification`` without parentheses.
     :type _func: Callable | None
-    :param sources: Measurements that must exist before the verifier body runs.
-    :type sources: Iterable[MeasurementSource] | None
 
     Wrapper kwargs (not part of the wrapped function signature unless declared there):
 
@@ -92,16 +70,13 @@ def verification(
     :type key: str
     :param optional: When ``True``, FAIL/ERROR does not fail the aggregate result.
     :type optional: bool
-    :param row_index: Row index for multi-row measurement sources (default ``0``).
-    :type row_index: int
     :param expected_val: Stored in SQLite when provided (tolerance-style verifiers).
     :type expected_val: float
     :param minimum: Stored in SQLite when provided (minimum-style host verifiers).
     :type minimum: float
 
-    :returns: The decorated callable, tagged for docgen as a verification API.
+    :returns: The decorated callable.
     """
-    source_list = list(sources or [])
 
     def decorate(func: Callable[..., Any]) -> Callable[..., Any]:
         domain = resolve_domain(func)
@@ -133,49 +108,6 @@ def verification(
                     )
                 )
                 return result
-            for source in source_list:
-                if (
-                    ctx.db.get_measurement(
-                        source.domain,
-                        source.command,
-                        key,
-                        row_index=int(kwargs.get("row_index", 0)),
-                    )
-                    is None
-                ):
-                    if ctx.logger is not None:
-                        ctx.logger.debug(
-                            "verification %s.%s key=%s missing source %s.%s",
-                            domain,
-                            command,
-                            key,
-                            source.domain,
-                            source.command,
-                        )
-                    result = VerificationResult(
-                        status="ERROR",
-                        message=(
-                            f"Missing measurement source {source.domain}."
-                            f"{source.command} key={key}"
-                        ),
-                        optional=optional,
-                    )
-                    ctx.result_aggregator.record_verification(
-                        result, key=str(key), command=command, domain=domain
-                    )
-                    ctx.db.insert_verification(
-                        VerificationRow(
-                            domain=domain,
-                            command=command,
-                            key=key,
-                            expected=kwargs.get("expected_val"),
-                            actual=None,
-                            status=result.status,
-                            optional=result.optional,
-                            message=result.message,
-                        )
-                    )
-                    return result
             try:
                 raw_result = func(*args, **kwargs)
                 if isinstance(raw_result, VerificationResult):

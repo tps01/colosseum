@@ -55,7 +55,7 @@ def _dedupe_entry_points(
 
 
 def entry_points_for_group(group: str) -> list[ColosseumPluginEntryPoint]:
-    """Return entry points for *group* (importlib.metadata compat shim).
+    """Return entry points for *group* (importlib.metadata compatibility shim).
 
     :param group: Entry-point group name (for example ``colosseum.plugins``).
     :type group: str

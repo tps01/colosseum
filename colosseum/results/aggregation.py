@@ -119,17 +119,8 @@ class ResultAggregator:
             if not row["optional"] and row["status"] in {"FAIL", "ERROR"}
         ]
 
-    def failed_required_verifications(self) -> list[OutcomeRecord]:
-        return [row for row in self.failed_required_outcomes() if row.get("kind") == "verification"]
-
-    def failed_required_commands(self) -> list[OutcomeRecord]:
-        return [row for row in self.failed_required_outcomes() if row.get("kind") == "command"]
-
     def optional_outcomes(self) -> list[OutcomeRecord]:
         return [row for row in self._records if row["optional"]]
-
-    def optional_verifications(self) -> list[OutcomeRecord]:
-        return [row for row in self.optional_outcomes() if row.get("kind") == "verification"]
 
     def counts(self) -> OutcomeCounts:
         required: Counter[str] = Counter()

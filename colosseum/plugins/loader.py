@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from colosseum.compat.entry_points import entry_points_for_group
+from colosseum.compatibility.entry_points import entry_points_for_group
 from colosseum.logging import get_logger
 
 from .registry import PluginRegistrationError, PluginRegistry
@@ -17,6 +17,8 @@ def ensure_plugins_loaded(registry: PluginRegistry) -> None:
 
     :param registry: Registry that receives plugin registrations.
     :type registry: PluginRegistry
+    :raises PluginRegistrationError: On namespace/section collisions or when a
+        plugin ``register()`` callable raises for any other reason.
     """
     if registry.loaded:
         return
@@ -29,8 +31,11 @@ def ensure_plugins_loaded(registry: PluginRegistry) -> None:
             _logger.debug("Loaded plugin entry point: %s", ep.name)
         except PluginRegistrationError:
             raise
-        except Exception:
+        except Exception as exc:
             _logger.exception("Failed to load plugin entry point `%s`", ep.name)
+            raise PluginRegistrationError(
+                f"Failed to load plugin entry point `{ep.name}`: {exc}"
+            ) from exc
 
     registry.loaded = True
     _logger.debug(

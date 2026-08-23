@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .records import MeasurementRecord, RunMetadataRecord, VerificationRecord
+from .records import (
+    CommandRow,
+    MeasurementRecord,
+    MeasurementRow,
+    RunMetadataRecord,
+    VerificationRecord,
+    VerificationRow,
+)
 
 if TYPE_CHECKING:
     from ..context import RuntimeContext
@@ -23,44 +29,6 @@ def _cursor_rowid(cur: sqlite3.Cursor) -> int:
     if rowid is None:
         raise RuntimeError("INSERT did not return a row id")
     return int(rowid)
-
-
-@dataclass
-class MeasurementRow:
-    domain: str
-    command: str
-    key: str
-    row_index: int = 0
-    value: object = None
-    units: str | None = None
-    artifact_path: str | None = None
-    status: str = "PASS"
-    timestamp: str = ""
-
-
-@dataclass
-class VerificationRow:
-    domain: str
-    command: str
-    key: str
-    expected: object = None
-    actual: object = None
-    status: str = "PASS"
-    optional: bool = False
-    message: str = ""
-    timestamp: str = ""
-
-
-@dataclass
-class CommandRow:
-    domain: str
-    command: str
-    key: str = ""
-    result: object = None
-    status: str = "PASS"
-    optional: bool = False
-    message: str = ""
-    timestamp: str = ""
 
 
 class DatabaseManager:
@@ -214,7 +182,7 @@ class DatabaseManager:
         cur = conn.execute(
             """
             SELECT domain, command, key, row_index, value_json, units,
-                   artifact_path, status, timestamp
+                   artifact_path, status, timestamp, id
             FROM measurements WHERE domain=? AND command=? AND key=? AND row_index=?
             ORDER BY id DESC LIMIT 1
             """,
@@ -233,6 +201,7 @@ class DatabaseManager:
             artifact_path=item[6],
             status=item[7],
             timestamp=item[8],
+            id=item[9],
         )
 
     def list_measurements(self, domain: str, command: str, key: str) -> list[MeasurementRow]:
@@ -240,7 +209,7 @@ class DatabaseManager:
         cur = conn.execute(
             """
             SELECT domain, command, key, row_index, value_json, units,
-                   artifact_path, status, timestamp
+                   artifact_path, status, timestamp, id
             FROM measurements WHERE domain=? AND command=? AND key=? ORDER BY id ASC
             """,
             (domain, command, key),
@@ -258,6 +227,7 @@ class DatabaseManager:
                     artifact_path=item[6],
                     status=item[7],
                     timestamp=item[8],
+                    id=item[9],
                 )
             )
         return out

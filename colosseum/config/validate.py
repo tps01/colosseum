@@ -27,7 +27,6 @@ def collect_unknown_key_warnings(
 
 def run_section_validators(
     normalized: dict[str, dict[int, dict[str, Any]]],
-    _specs: dict[str, ConfigSectionSpec],
     validators_by_section: dict[str, list[ConfigValidator]],
 ) -> list[str]:
     messages: list[str] = []

@@ -1,0 +1,5 @@
+name = "multi_test_fail_fast_crash"
+fail_fast = true
+setup = []
+tests = ["../scripts/crash_test.py", "../scripts/pass_test.py"]
+teardown = ["../scripts/teardown_ok.py"]

@@ -3,7 +3,6 @@
 
 # Plugin registration entry points
 register  # colosseum_*.__init__
-spec  # docgen_entry
 
 # Public lazy namespaces (resolved at runtime)
 equipment  # colosseum.__init__

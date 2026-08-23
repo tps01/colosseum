@@ -56,3 +56,65 @@ def test_test_script_exception_fails_suite_without_verification(
     assert errors, "expected script_fail event for crashed test"
     summary = (run_dir / "summary.txt").read_text(encoding="utf-8")
     assert "Overall result: FAIL" in summary
+
+
+def test_default_continues_after_test_crash(fixtures_dir, core_config, isolated_cwd) -> None:
+    suite = fixtures_dir / "suites" / "multi_test_continue.toml"
+    _run_suite_expect_exit(suite, core_config, isolated_cwd, 1)
+    run_dir = latest_output_dir(isolated_cwd)
+    start_rows = query_db(
+        run_dir,
+        "SELECT message FROM events WHERE message LIKE 'script_start:%'",
+    )
+    starts = "\n".join(m[0] for m in start_rows)
+    assert "crash_test.py" in starts
+    assert "pass_test.py" in starts
+    assert "teardown_ok.py" in starts
+    meta = dict(query_db(run_dir, "SELECT key, value FROM run_metadata"))
+    assert meta.get("fail_fast") == "0"
+    assert meta.get("fail_fast_stopped") is None
+
+
+def test_fail_fast_stops_after_test_crash(fixtures_dir, core_config, isolated_cwd) -> None:
+    suite = fixtures_dir / "suites" / "multi_test_fail_fast_crash.toml"
+    _run_suite_expect_exit(suite, core_config, isolated_cwd, 1)
+    run_dir = latest_output_dir(isolated_cwd)
+    start_rows = query_db(
+        run_dir,
+        "SELECT message FROM events WHERE message LIKE 'script_start:%'",
+    )
+    starts = "\n".join(m[0] for m in start_rows)
+    assert "crash_test.py" in starts
+    assert "pass_test.py" not in starts
+    assert "teardown_ok.py" in starts
+    meta = dict(query_db(run_dir, "SELECT key, value FROM run_metadata"))
+    assert meta.get("fail_fast") == "1"
+    assert meta.get("fail_fast_stopped") == "1"
+    stops = query_db(
+        run_dir,
+        "SELECT message FROM events WHERE message LIKE 'fail_fast_stop:%'",
+    )
+    assert stops and "script_error" in stops[0][0]
+
+
+def test_fail_fast_stops_after_required_verification_fail(
+    fixtures_dir, core_config, isolated_cwd
+) -> None:
+    suite = fixtures_dir / "suites" / "multi_test_fail_fast_verify.toml"
+    _run_suite_expect_exit(suite, core_config, isolated_cwd, 1)
+    run_dir = latest_output_dir(isolated_cwd)
+    start_rows = query_db(
+        run_dir,
+        "SELECT message FROM events WHERE message LIKE 'script_start:%'",
+    )
+    starts = "\n".join(m[0] for m in start_rows)
+    assert "fail_required_verify.py" in starts
+    assert "pass_test.py" not in starts
+    assert "teardown_ok.py" in starts
+    meta = dict(query_db(run_dir, "SELECT key, value FROM run_metadata"))
+    assert meta.get("fail_fast_stopped") == "1"
+    stops = query_db(
+        run_dir,
+        "SELECT message FROM events WHERE message LIKE 'fail_fast_stop:%'",
+    )
+    assert stops and "required_failure" in stops[0][0]

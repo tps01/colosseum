@@ -108,7 +108,7 @@ def test_failed_required_excludes_optional_passes() -> None:
     agg = ResultAggregator()
     _record(agg, "PASS", optional=True)
     _record(agg, "FAIL", optional=True)
-    assert agg.failed_required_verifications() == []
+    assert agg.failed_required_outcomes() == []
 
 
 def test_all_required_pass_overall() -> None:
@@ -119,36 +119,6 @@ def test_all_required_pass_overall() -> None:
     assert agg.exit_code() == 0
 
 
-def test_failed_required_verifications_filters_by_kind() -> None:
-    agg = ResultAggregator()
-    _record(agg, "FAIL", optional=False)
-    _record_command(agg, "FAIL", optional=False)
-    failed = agg.failed_required_verifications()
-    assert len(failed) == 1
-    assert failed[0]["kind"] == "verification"
-    assert failed[0]["key"] == "k"
-
-
-def test_failed_required_commands_filters_by_kind() -> None:
-    agg = ResultAggregator()
-    _record(agg, "FAIL", optional=False)
-    _record_command(agg, "FAIL", optional=False)
-    failed = agg.failed_required_commands()
-    assert len(failed) == 1
-    assert failed[0]["kind"] == "command"
-    assert failed[0]["key"] == "ck"
-
-
-def test_optional_verifications_filters_by_kind() -> None:
-    agg = ResultAggregator()
-    _record(agg, "FAIL", optional=True)
-    _record_command(agg, "FAIL", optional=True)
-    optional = agg.optional_verifications()
-    assert len(optional) == 1
-    assert optional[0]["kind"] == "verification"
-    assert optional[0]["optional"] is True
-
-
 def test_kind_filters_use_exact_equality() -> None:
     """Reject ``is``/ordering mutants that behave like ``==`` only for interned literals."""
     agg = ResultAggregator()
@@ -157,30 +127,39 @@ def test_kind_filters_use_exact_equality() -> None:
     _record_command(agg, "FAIL", optional=False)
     _record_command(agg, "FAIL", optional=True)
 
-    ver_fail = agg.failed_required_verifications()[0]
+    def _required(kind: str) -> list:
+        return [row for row in agg.failed_required_outcomes() if row["kind"] == kind]
+
+    def _optional(kind: str) -> list:
+        return [row for row in agg.optional_outcomes() if row["kind"] == kind]
+
+    ver_fail = _required("verification")[0]
     ver_fail["kind"] = json.loads('"verification"')
-    assert len(agg.failed_required_verifications()) == 1
+    assert len(_required("verification")) == 1
 
-    cmd_fail = agg.failed_required_commands()[0]
+    cmd_fail = _required("command")[0]
     cmd_fail["kind"] = json.loads('"command"')
-    assert len(agg.failed_required_commands()) == 1
+    assert len(_required("command")) == 1
 
-    opt_ver = agg.optional_verifications()[0]
+    opt_ver = _optional("verification")[0]
     opt_ver["kind"] = json.loads('"verification"')
-    assert len(agg.optional_verifications()) == 1
+    assert len(_optional("verification")) == 1
 
     opt_ver["kind"] = "verification" + "~"
-    assert agg.optional_verifications() == []
+    assert _optional("verification") == []
 
     agg_ver = ResultAggregator()
     _record(agg_ver, "FAIL")
-    agg_ver.failed_required_verifications()[0]["kind"] = "verification" + "~"
-    assert agg_ver.failed_required_verifications() == []
+    agg_ver.failed_required_outcomes()[0]["kind"] = "verification" + "~"
+    remaining = [
+        row for row in agg_ver.failed_required_outcomes() if row["kind"] == "verification"
+    ]
+    assert remaining == []
 
     agg_cmd = ResultAggregator()
     _record_command(agg_cmd, "FAIL")
-    agg_cmd.failed_required_commands()[0]["kind"] = "comman"
-    assert agg_cmd.failed_required_commands() == []
+    agg_cmd.failed_required_outcomes()[0]["kind"] = "comman"
+    assert [row for row in agg_cmd.failed_required_outcomes() if row["kind"] == "command"] == []
 
 
 def test_optional_error_does_not_fail_overall() -> None:
@@ -200,3 +179,27 @@ def test_counts_split_required_and_optional() -> None:
     assert counts["required"]["FAIL"] == 1
     assert counts["optional"]["FAIL"] == 1
     assert counts["total"] == 3
+
+
+def test_failed_required_outcomes_keep_kind_and_key() -> None:
+    agg = ResultAggregator()
+    _record(agg, "FAIL", optional=False)
+    _record_command(agg, "FAIL", optional=False)
+    failed = agg.failed_required_outcomes()
+    by_kind = {row["kind"]: row for row in failed}
+    assert set(by_kind) == {"verification", "command"}
+    assert by_kind["verification"]["key"] == "k"
+    assert by_kind["command"]["key"] == "ck"
+    assert all(row["optional"] is False for row in failed)
+    assert all(row["status"] in {"FAIL", "ERROR"} for row in failed)
+
+
+def test_optional_outcomes_include_commands_and_verifications() -> None:
+    agg = ResultAggregator()
+    _record(agg, "FAIL", optional=True)
+    _record_command(agg, "ERROR", optional=True)
+    _record(agg, "FAIL", optional=False)
+    optional = agg.optional_outcomes()
+    assert {row["kind"] for row in optional} == {"verification", "command"}
+    assert all(row["optional"] is True for row in optional)
+    assert {row["kind"] for row in agg.failed_required_outcomes()} == {"verification"}

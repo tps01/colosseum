@@ -1,7 +1,14 @@
-"""Colosseum extension template — register() wires namespace and config."""
+"""Colosseum extension template — register() wires namespace (and optional config)."""
 
 from colosseum.config.sections import ConfigSectionSpec
+from colosseum.logging import get_logger
 from colosseum.plugins.registry import PluginRegistry
+
+# Evidence domain for @command / @measurement / @verification (rename when forking).
+# register_namespace also defaults the domain to the namespace if this is unset.
+__colosseum_domain__ = "template"
+
+_logger = get_logger("colosseum.template")
 
 
 def register(registry: PluginRegistry) -> None:
@@ -9,8 +16,9 @@ def register(registry: PluginRegistry) -> None:
 
     # Required: expose public API as col.template.* (TODO: rename namespace when forking).
     registry.register_namespace("template", api)
+    _logger.debug("Registered col.template namespace")
 
-    # Required: declare repeatable bench TOML section(s).
+    # Optional (Layer 2): declare repeatable bench TOML section(s) when you own config.
     registry.register_config_section(
         ConfigSectionSpec(
             "template.device",
@@ -20,10 +28,5 @@ def register(registry: PluginRegistry) -> None:
         )
     )
 
-    # TODO: Optional custom validation (uncomment after implementing validators.py).
-    # from colosseum_template.validators import validate_template_device
-    # registry.register_config_validator("template.device", validate_template_device)
-
-    # TODO: Optional cleanup on col.endex().
-    # from colosseum_template.connections import close_all
-    # registry.register_shutdown(close_all)
+    # Optional (Layer 3): registry.register_config_validator("template.device", fn)
+    # Optional (Layer 3): registry.register_shutdown(close_all)

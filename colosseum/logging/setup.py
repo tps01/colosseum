@@ -53,4 +53,21 @@ def setup_logging(
 
 
 def get_logger(name: str) -> logging.Logger:
+    """Return a logger that participates in the Colosseum run log.
+
+    ``setup_logging`` attaches handlers to the ``colosseum`` logger. Plugin and
+    library code must use ``colosseum.<namespace>`` (for example
+    ``colosseum.template``) or a child such as ``colosseum.template.api`` so
+    records propagate into ``debug.log``. Names outside that tree never reach
+    the run artifact.
+
+    The file handler records DEBUG and above. Console output, when enabled,
+    defaults to INFO.
+
+    :param name: Logger name. Plugins use ``colosseum.<namespace>``.
+    :type name: str
+
+    :returns: Standard library logger for ``name``.
+    :rtype: logging.Logger
+    """
     return logging.getLogger(name)

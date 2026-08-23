@@ -33,7 +33,6 @@ def test_validator_messages_collected() -> None:
     normalized = {"equipment.psu": {1: {"psu_id": 1, "driver": "sim"}}}
     msgs = run_section_validators(
         normalized,
-        {SPEC.dotted_path: SPEC},
         {SPEC.dotted_path: [reject_sim]},
     )
     assert msgs == ["sim not allowed in this test validator"]

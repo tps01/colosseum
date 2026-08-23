@@ -7,7 +7,7 @@ import pytest
 import colosseum as col
 import colosseum.context as context_module
 from colosseum.config.loader import load_config
-from colosseum.context import apply_no_artifacts, init_context, require_context
+from colosseum.context import apply_no_artifacts, init_context, get_context
 from colosseum.output.artifacts import resolve_artifact_path
 from colosseum.output.paths import ensure_output_dir, ensure_runtime_ready
 
@@ -37,7 +37,7 @@ def test_load_config_no_artifacts_skips_outputs(core_config, isolated_cwd, capsy
 
 def test_ensure_output_dir_raises_in_no_artifacts_mode(core_config) -> None:
     load_config(core_config, no_artifacts=True)
-    ctx = require_context()
+    ctx = get_context()
     ensure_runtime_ready(ctx)
 
     with pytest.raises(RuntimeError, match="no-artifacts mode"):
@@ -54,7 +54,7 @@ def test_resolve_artifact_path_raises_in_no_artifacts_mode(core_config) -> None:
 
 def test_late_no_artifacts_toggle_raises(core_config) -> None:
     load_config(core_config)
-    ctx = require_context()
+    ctx = get_context()
     ensure_runtime_ready(ctx)
 
     with pytest.raises(RuntimeError, match="before the runtime is bootstrapped"):
@@ -76,5 +76,5 @@ def test_init_context_honors_env_no_artifacts(core_config, isolated_cwd, monkeyp
     load_config(core_config)
     measure_value(key="rail", value=3.3)
 
-    assert require_context().no_artifacts is True
+    assert get_context().no_artifacts is True
     assert not (isolated_cwd / "outputs").exists()

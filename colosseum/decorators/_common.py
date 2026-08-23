@@ -6,7 +6,7 @@ import sys
 from collections.abc import Callable
 from typing import Any
 
-from ..context import RuntimeContext, require_context
+from ..context import RuntimeContext, get_context
 
 
 def resolve_domain(func: Callable[..., Any]) -> str:
@@ -49,4 +49,4 @@ def resolve_command(func: Callable[..., Any]) -> str:
 
 
 def ensure_runtime_context() -> RuntimeContext:
-    return require_context()
+    return get_context()

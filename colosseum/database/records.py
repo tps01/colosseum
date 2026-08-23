@@ -4,35 +4,57 @@ from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass(frozen=True)
-class MeasurementRecord:
-    id: int
+@dataclass
+class MeasurementRow:
+    """Measurement write/read row. ``id`` is set when loaded from SQLite."""
+
     domain: str
     command: str
     key: str
-    row_index: int
-    value: Any
-    units: str | None
-    artifact_path: str | None
-    status: str
-    timestamp: str
+    row_index: int = 0
+    value: Any = None
+    units: str | None = None
+    artifact_path: str | None = None
+    status: str = "PASS"
+    timestamp: str = ""
+    id: int | None = None
 
 
-@dataclass(frozen=True)
-class VerificationRecord:
-    id: int
+@dataclass
+class VerificationRow:
+    """Verification write/read row. ``id`` is set when loaded from SQLite."""
+
     domain: str
     command: str
     key: str
-    expected: Any
-    actual: Any
-    status: str
-    optional: bool
-    message: str | None
-    timestamp: str
+    expected: Any = None
+    actual: Any = None
+    status: str = "PASS"
+    optional: bool = False
+    message: str | None = ""
+    timestamp: str = ""
+    id: int | None = None
 
 
-@dataclass(frozen=True)
+@dataclass
+class CommandRow:
+    domain: str
+    command: str
+    key: str = ""
+    result: Any = None
+    status: str = "PASS"
+    optional: bool = False
+    message: str = ""
+    timestamp: str = ""
+    id: int | None = None
+
+
+@dataclass
 class RunMetadataRecord:
     key: str
     value: str
+
+
+# Public read aliases — same objects as the write rows.
+MeasurementRecord = MeasurementRow
+VerificationRecord = VerificationRow

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from .manager import (
+from .manager import DatabaseManager, initialize_database_if_needed
+from .records import (
     CommandRow,
-    DatabaseManager,
+    MeasurementRecord,
     MeasurementRow,
+    RunMetadataRecord,
+    VerificationRecord,
     VerificationRow,
-    initialize_database_if_needed,
 )
-from .records import MeasurementRecord, RunMetadataRecord, VerificationRecord
 
 __all__ = [
     "DatabaseManager",

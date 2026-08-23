@@ -22,7 +22,9 @@ def verify_docgen_outputs(*, require_pdf: bool) -> int:
     :returns: Process exit code (``0`` on success).
     :rtype: int
     """
-    config_ref = REPO / "build" / "docgen" / "config_reference.rst"
+    config_ref = (
+        REPO / "build" / "docgen" / "site" / "source" / "guides" / "bench_config_reference.rst"
+    )
     if not config_ref.is_file():
         print(f"DOCGEN FAIL: expected {config_ref}", file=sys.stderr)
         return 1

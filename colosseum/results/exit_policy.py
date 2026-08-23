@@ -9,6 +9,7 @@ from typing import NoReturn
 
 from ..context import RuntimeContext, get_context
 from ..output import ensure_runtime_ready, rename_run_directory_for_result
+from ..resource_cache import close_cached_resources
 
 _ORIGINAL_EXCEPTHOOK = sys.excepthook
 _AUTO_FINALIZE_HOOKS_REGISTERED = False
@@ -41,18 +42,8 @@ def _finalize_context(ctx: RuntimeContext) -> int:
     if ctx.logger is not None:
         ctx.logger.debug("Running plugin shutdown hooks")
     ctx.plugin_registry.run_shutdown()
-    resource_count = len(ctx.resource_cache)
-    if ctx.logger is not None and resource_count:
-        ctx.logger.debug("Closing %d cached resource(s)", resource_count)
-    for resource in list(ctx.resource_cache.values()):
-        close = getattr(resource, "close", None)
-        if callable(close):
-            try:
-                close()
-            except Exception:
-                if ctx.logger is not None:
-                    ctx.logger.exception("Failed to close resource")
-    ctx.resource_cache.clear()
+    # Empty prefix matches every remaining key after plugin shutdown hooks.
+    close_cached_resources(ctx.resource_cache, (("",),), logger=ctx.logger)
     measurement_count = 0
     command_count = 0
     if ctx.db.is_initialized():
@@ -76,13 +67,15 @@ def _finalize_context(ctx: RuntimeContext) -> int:
         )
     ctx.finalized = True
     ctx.final_exit_code = code
-    ctx._finalized_count += 1
     return code
 
 
 def _auto_finalize_active_context() -> None:
-    ctx = get_context()
-    if ctx is None or ctx.finalized or not ctx.auto_finalize:
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        return
+    if ctx.finalized or not ctx.auto_finalize:
         return
     try:
         _finalize_context(ctx)
@@ -95,7 +88,10 @@ def _handle_unhandled_exception(
     exc_value: BaseException,
     exc_traceback: TracebackType | None,
 ) -> None:
-    ctx = get_context()
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        ctx = None
     if ctx is not None and not ctx.finalized and ctx.auto_finalize:
         ctx.result_aggregator.mark_suite_error(f"unhandled exception: {exc_value}")
         if ctx.db.is_initialized():
@@ -127,9 +123,10 @@ def endex() -> NoReturn:
     :raises SystemExit: Exit code ``1`` when no run context exists or the run was
         already finalized; otherwise ``0`` (PASS) or ``1`` (FAIL).
     """
-    ctx = get_context()
-    if ctx is None:
-        raise SystemExit(1)
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        raise SystemExit(1) from None
 
     if ctx.finalized:
         raise SystemExit(ctx.final_exit_code if ctx.final_exit_code is not None else 1)

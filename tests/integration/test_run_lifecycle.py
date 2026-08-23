@@ -18,7 +18,7 @@ from tests.support.helpers import latest_output_dir, query_db, run_endex_expect_
 def test_decorators_create_sqlite_log_and_summary(core_config, isolated_cwd) -> None:
     load_config(core_config)
     measure_value(key="v1", value=3.3)
-    active_dir = col.context.require_context().output_dir
+    active_dir = col.context.get_context().output_dir
     assert active_dir is not None
     assert not active_dir.name.endswith("-pass")
     assert not active_dir.name.endswith("-fail")
@@ -26,7 +26,7 @@ def test_decorators_create_sqlite_log_and_summary(core_config, isolated_cwd) -> 
     run_dir = latest_output_dir(isolated_cwd)
     assert run_dir.name.endswith("-pass")
     assert not active_dir.exists()
-    assert col.context.require_context().output_dir == run_dir
+    assert col.context.get_context().output_dir == run_dir
     assert (run_dir / "debug.log").is_file()
     assert (run_dir / "execution.sqlite").is_file()
     tables = {
@@ -83,7 +83,7 @@ def test_optional_fail_still_exits_zero(core_config, isolated_cwd) -> None:
     verify_value(key="probe_optional", expected_val=1.8, tolerance=0.1, optional=True)
     run_endex_expect_code(0)
     run_dir = latest_output_dir(isolated_cwd)
-    row = col.context.require_context()
+    row = col.context.get_context()
     # context finalized; query sqlite directly
     import sqlite3
 
