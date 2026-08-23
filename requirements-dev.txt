@@ -1,2 +1,3 @@
-# Standalone core development environment
--e ".[test,docs,static,gui]"
+# Prefer: python -m pip install -e .
+# This file remains so older docs and scripts keep working.
+-e .

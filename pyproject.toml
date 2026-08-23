@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "colosseum-core"
-version = "0.15.5"
+version = "0.15.7"
 description = "Colosseum test automation framework (core runtime)"
 requires-python = ">=3.9"
 license = "MIT"
@@ -12,14 +12,8 @@ dependencies = [
   "tomli>=2.0,<3; python_version < '3.11'",
   "typing_extensions>=4.0,<5; python_version < '3.10'",
   "customtkinter>=5.2,<6",
-]
-
-[project.optional-dependencies]
-test = [
   "pytest>=8.0,<9",
-]
-docs = ["sphinx>=7.0,<9"]
-static = [
+  "sphinx>=7.0,<9",
   "bandit[toml]>=1.7,<2",
   "vulture>=2.11,<3",
   "ruff>=0.8,<1",

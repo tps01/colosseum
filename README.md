@@ -18,7 +18,7 @@ pip install colosseum-core
 
 ```sh
 python -m venv .venv
-python -m pip install -r requirements-dev.txt
+python -m pip install -e .
 python scripts/run_tests.py
 python scripts/run_static.py
 python tests/regression/run_docgen_check.py --skip-pdf

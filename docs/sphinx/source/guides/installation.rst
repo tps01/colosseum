@@ -13,9 +13,9 @@ same environment; core discovers plugins through ``colosseum.plugins`` entry poi
 
 The desktop runner (``colosseum --gui``) is included with the core install.
 
-Development tools are intentionally separate::
+One install covers runtime, tests, static analysis, and docs tooling::
 
-   python -m pip install -r requirements-dev.txt
+   pip install -e .
 
 Python 3.9 and newer are supported.
 
