@@ -199,7 +199,9 @@ def get(dotted: str, default: object | None = None) -> object | None:
     except RuntimeError:
         if default is not None:
             return default
-        raise ConfigError("Configuration is not loaded. Call col.config.load_config(path).") from None
+        raise ConfigError(
+            "Configuration is not loaded. Call col.config.load_config(path)."
+        ) from None
     if ctx.config is None:
         if default is not None:
             return default
