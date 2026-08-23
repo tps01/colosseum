@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import sys
 import types
 from collections.abc import Callable
 
 import pytest
 from colosseum.config.sections import ConfigSectionSpec
+from colosseum.decorators._common import resolve_domain
 from colosseum.plugins import loader
 from colosseum.plugins.loader import ensure_plugins_loaded
 from colosseum.plugins.registry import PluginRegistrationError, PluginRegistry
@@ -78,6 +80,73 @@ def test_loader_loads_entry_points(monkeypatch: pytest.MonkeyPatch) -> None:
     reg = PluginRegistry()
     ensure_plugins_loaded(reg)
     assert reg.has_namespace("equipment")
+
+
+def test_register_namespace_sets_evidence_domain_when_unset() -> None:
+    reg = PluginRegistry()
+    module = types.ModuleType("acme_plugin_api")
+    reg.register_namespace("acme", module)
+    assert module.__colosseum_domain__ == "acme"
+
+
+def test_register_namespace_preserves_existing_evidence_domain() -> None:
+    reg = PluginRegistry()
+    package = types.ModuleType("vendor_pkg")
+    package.__colosseum_domain__ = "custom"
+    sys.modules["vendor_pkg"] = package
+    try:
+        api = types.ModuleType("vendor_pkg.api")
+        api.__name__ = "vendor_pkg.api"
+        sys.modules["vendor_pkg.api"] = api
+        reg.register_namespace("vendor", api)
+        assert package.__colosseum_domain__ == "custom"
+        assert not hasattr(api, "__colosseum_domain__")
+    finally:
+        sys.modules.pop("vendor_pkg.api", None)
+        sys.modules.pop("vendor_pkg", None)
+
+
+def test_register_namespace_domain_is_visible_to_resolve_domain() -> None:
+    reg = PluginRegistry()
+    package = types.ModuleType("auto_domain_pkg")
+    sys.modules["auto_domain_pkg"] = package
+    try:
+        api = types.ModuleType("auto_domain_pkg.api")
+        api.__name__ = "auto_domain_pkg.api"
+        sys.modules["auto_domain_pkg.api"] = api
+        reg.register_namespace("autodemo", api)
+
+        def sample() -> None:
+            return None
+
+        sample.__module__ = "auto_domain_pkg.api"
+        assert resolve_domain(sample) == "autodemo"
+    finally:
+        sys.modules.pop("auto_domain_pkg.api", None)
+        sys.modules.pop("auto_domain_pkg", None)
+
+
+def test_get_namespace_error_does_not_assume_colosseum_prefix() -> None:
+    reg = PluginRegistry()
+    with pytest.raises(RuntimeError, match="same environment as colosseum-core"):
+        reg.get_namespace("missing")
+
+
+def test_loader_fails_fast_on_register_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    class BrokenEntryPoint:
+        name = "broken"
+
+        def load(self) -> Callable[[PluginRegistry], None]:
+            def register(_registry: PluginRegistry) -> None:
+                raise RuntimeError("boom")
+
+            return register
+
+    monkeypatch.setattr(loader, "entry_points_for_group", lambda _group: [BrokenEntryPoint()])
+    reg = PluginRegistry()
+    with pytest.raises(PluginRegistrationError, match="Failed to load plugin entry point `broken`"):
+        ensure_plugins_loaded(reg)
+    assert reg.loaded is False
 
 
 def test_loader_fails_fast_on_namespace_collision(monkeypatch: pytest.MonkeyPatch) -> None:

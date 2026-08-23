@@ -6,7 +6,7 @@ import types
 
 import colosseum as col
 import colosseum.context as context_module
-from colosseum.context import init_context, require_context
+from colosseum.context import init_context, get_context
 
 
 def test_getattr_returns_lazy_proxy_for_unregistered_name() -> None:
@@ -17,7 +17,7 @@ def test_getattr_returns_lazy_proxy_for_unregistered_name() -> None:
 def test_third_party_namespace_resolves_after_register() -> None:
     context_module._ACTIVE_CONTEXT = None
     init_context(test_case_name="plugin_namespace")
-    ctx = require_context()
+    ctx = get_context()
 
     stub_api = types.ModuleType("stub_api")
 

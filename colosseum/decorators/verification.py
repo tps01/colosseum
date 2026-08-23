@@ -58,7 +58,7 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
 
     Wrapped functions must accept ``key=`` and return :class:`VerificationResult` (or
     ``bool``). Look up prior measurements in the body with
-    ``require_context().db.get_measurement(...)`` and return
+    ``get_context().db.get_measurement(...)`` and return
     :func:`missing_measurement_result` when evidence is absent.
 
     :param _func: Function to wrap when used as ``@verification`` without parentheses.

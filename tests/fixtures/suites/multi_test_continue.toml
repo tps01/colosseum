@@ -1,0 +1,4 @@
+name = "multi_test_continue"
+setup = []
+tests = ["../scripts/crash_test.py", "../scripts/pass_test.py"]
+teardown = ["../scripts/teardown_ok.py"]

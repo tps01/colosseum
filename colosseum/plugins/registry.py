@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import types
 from collections import defaultdict
 from typing import Callable
@@ -46,12 +47,14 @@ class PluginRegistry:
                 "Use replace_namespace() for an intentional override."
             )
         self._namespaces[name] = module
+        self._ensure_evidence_domain(module, name)
         _logger.debug("Registered namespace `%s`", name)
 
     def replace_namespace(self, name: str, module: types.ModuleType) -> None:
         if name not in self._namespaces:
             _logger.warning("Replacing unregistered namespace `%s`", name)
         self._namespaces[name] = module
+        self._ensure_evidence_domain(module, name)
 
     def register_shutdown(self, hook: Callable[[], None]) -> None:
         self._shutdown_hooks.append(hook)
@@ -66,7 +69,8 @@ class PluginRegistry:
         if name not in self._namespaces:
             raise RuntimeError(
                 f"Namespace `{name}` is not registered. Install the plugin package "
-                f"(e.g. colosseum-{name}) and ensure it exposes a colosseum.plugins entry point."
+                "that provides it (same environment as colosseum-core) and ensure it "
+                "exposes a colosseum.plugins entry point."
             )
         return self._namespaces[name]
 
@@ -79,6 +83,25 @@ class PluginRegistry:
                 hook()
             except Exception:
                 _logger.exception("Plugin shutdown hook failed")
+
+    @staticmethod
+    def _ensure_evidence_domain(module: types.ModuleType, name: str) -> None:
+        """Default evidence domain to *name* when the plugin has not set one."""
+        module_name = getattr(module, "__name__", "") or ""
+        parts = module_name.split(".") if module_name else []
+        for depth in range(len(parts), 0, -1):
+            parent = sys.modules.get(".".join(parts[:depth]))
+            if parent is None:
+                continue
+            if getattr(parent, "__colosseum_domain__", None):
+                return
+        if getattr(module, "__colosseum_domain__", None):
+            return
+        top = parts[0] if parts else ""
+        if top and top in sys.modules:
+            sys.modules[top].__colosseum_domain__ = name  # type: ignore[attr-defined]
+        else:
+            module.__colosseum_domain__ = name  # type: ignore[attr-defined]
 
     @property
     def loaded(self) -> bool:

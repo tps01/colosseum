@@ -8,13 +8,11 @@ Core of the Colosseum test automation framework. It provides:
 - SQLite databse, logs, summaries, and artifacts
 - GUI
 
-
 ## Install
 
 ```sh
 pip install colosseum-core
 ```
-
 
 ## Develop
 

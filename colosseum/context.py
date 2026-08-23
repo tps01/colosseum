@@ -39,11 +39,7 @@ class RuntimeContext:
     config_warnings: list[str] = field(default_factory=list)
 
 
-def get_context() -> RuntimeContext | None:
-    return _ACTIVE_CONTEXT
-
-
-def require_context() -> RuntimeContext:
+def get_context() -> RuntimeContext:
     if _ACTIVE_CONTEXT is None:
         raise RuntimeError(
             "Runtime is not initialized. Call col.config.load_config() or use `colosseum run`."

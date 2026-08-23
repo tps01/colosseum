@@ -71,8 +71,11 @@ def _finalize_context(ctx: RuntimeContext) -> int:
 
 
 def _auto_finalize_active_context() -> None:
-    ctx = get_context()
-    if ctx is None or ctx.finalized or not ctx.auto_finalize:
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        return
+    if ctx.finalized or not ctx.auto_finalize:
         return
     try:
         _finalize_context(ctx)
@@ -85,7 +88,10 @@ def _handle_unhandled_exception(
     exc_value: BaseException,
     exc_traceback: TracebackType | None,
 ) -> None:
-    ctx = get_context()
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        ctx = None
     if ctx is not None and not ctx.finalized and ctx.auto_finalize:
         ctx.result_aggregator.mark_suite_error(f"unhandled exception: {exc_value}")
         if ctx.db.is_initialized():
@@ -117,9 +123,10 @@ def endex() -> NoReturn:
     :raises SystemExit: Exit code ``1`` when no run context exists or the run was
         already finalized; otherwise ``0`` (PASS) or ``1`` (FAIL).
     """
-    ctx = get_context()
-    if ctx is None:
-        raise SystemExit(1)
+    try:
+        ctx = get_context()
+    except RuntimeError:
+        raise SystemExit(1) from None
 
     if ctx.finalized:
         raise SystemExit(ctx.final_exit_code if ctx.final_exit_code is not None else 1)

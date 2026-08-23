@@ -3,7 +3,7 @@ from __future__ import annotations
 import runpy
 from pathlib import Path
 
-from ..context import require_context
+from ..context import get_context
 
 
 class ScriptRunError(RuntimeError):
@@ -21,7 +21,7 @@ def _system_exit_code(exc: SystemExit) -> int:
 
 def run_script(path: Path) -> None:
     """Execute a test/setup/teardown script (calls main() only; no endex)."""
-    ctx = require_context()
+    ctx = get_context()
     resolved = path.resolve()
     ctx.db.insert_run_metadata("active_script", str(resolved))
     ctx.db.insert_event("INFO", "runner", f"script_start:{resolved}")

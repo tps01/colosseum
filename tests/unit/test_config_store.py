@@ -7,7 +7,7 @@ import pytest
 import colosseum as col
 from colosseum.config.loader import ConfigError, ConfigStore, load_config
 from colosseum.config.sections import ConfigSectionSpec
-from colosseum.context import init_context, require_context
+from colosseum.context import init_context, get_context
 from colosseum.output import ensure_output_dir
 
 
@@ -98,7 +98,7 @@ def test_config_is_loaded_reports_runtime_state(core_config) -> None:
 
 def test_apply_raw_config_attaches_store() -> None:
     from colosseum.config.loader import apply_raw_config
-    from colosseum.context import init_context, require_context
+    from colosseum.context import init_context, get_context
     import colosseum.context as context_module
 
     context_module._ACTIVE_CONTEXT = None
@@ -113,13 +113,13 @@ def test_apply_raw_config_attaches_store() -> None:
         }
     }
     store = apply_raw_config(ctx, raw, source_label="(test)")
-    assert require_context().config_path == "(test)"
+    assert get_context().config_path == "(test)"
     assert store.require_item("acme.device", 1)["resource"] == "COM1"
 
 
 def test_load_config_reload_updates_run_metadata(core_config, isolated_cwd, tmp_path) -> None:
     load_config(core_config)
-    ctx = require_context()
+    ctx = get_context()
     ensure_output_dir(ctx)
     replacement = tmp_path / "replacement.toml"
     replacement.write_text(

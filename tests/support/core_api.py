@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from colosseum.context import require_context
+from colosseum.context import get_context
 from colosseum.decorators import VerificationResult, measurement, verification
 
 
@@ -19,7 +19,7 @@ def verify_value(
     tolerance: float,
     optional: bool = False,
 ) -> VerificationResult:
-    row = require_context().db.get_measurement("core", "measure_value", key)
+    row = get_context().db.get_measurement("core", "measure_value", key)
     if row is None:
         return VerificationResult(status="ERROR", message=f"no measurement for key={key}")
     actual = float(row.value)

@@ -1,6 +1,6 @@
 # Suite behavior when a test script raises
 
-## Current behavior
+## Default behavior (`fail_fast = false`)
 
 When a script in the suite **`tests`** list raises an uncaught exception:
 
@@ -14,8 +14,21 @@ This is covered by `tests/integration/test_suite_runner.py::test_test_script_exc
 
 ## Rationale
 
-The runner preserves suite throughput and teardown execution, but an uncaught test exception is still a failed run because the script did not complete its evidence path. See [docs/scope.md](../scope.md) ("Suite test exceptions").
+The default preserves suite throughput and teardown execution, but an uncaught test exception is still a failed run because the script did not complete its evidence path. See [docs/scope.md](../scope.md).
 
-## Future option
+## `fail_fast = true`
 
-A future suite flag could choose fail-fast behavior or opt into best-effort continuation semantics. See [ddd-setup-teardown.md](../design/ddd-setup-teardown.md).
+When continuing after a failure would be dangerous, set in the suite TOML:
+
+```toml
+fail_fast = true
+```
+
+Then the runner stops remaining tests after:
+
+- an uncaught test script exception / early exit, or
+- a required verification or command FAIL/ERROR after a test returns
+
+Teardown still runs. Optional failures do not stop the suite.
+
+Covered by `tests/integration/test_suite_runner.py` fail-fast cases.

@@ -23,7 +23,7 @@ Verifications
 
 ``@verification`` records ``PASS``, ``FAIL``, or ``ERROR``. Look up prior
 measurements in the verifier body (for example
-``require_context().db.get_measurement(...)``) and return
+``get_context().db.get_measurement(...)``) and return
 ``missing_measurement_result`` when evidence is absent.
 
 Optional verifications may fail without failing the aggregate result.
@@ -31,6 +31,13 @@ Optional verifications may fail without failing the aggregate result.
 Domains
 -------
 
-The defining package may set ``__colosseum_domain__`` to choose the SQLite evidence
-domain. A function-level ``__colosseum_domain__`` override takes precedence. APIs without
-an override use ``core``.
+Evidence is stored under a domain string. Resolution order:
+
+1. Function-level ``__colosseum_domain__`` override.
+2. Package (or parent package) ``__colosseum_domain__``.
+3. Default: when ``register_namespace(name, module)`` runs, core sets the package
+   domain to ``name`` if none is already set. Otherwise undecorated / unregistered
+   APIs fall back to ``core``.
+
+Third-party plugins usually get domain ``==`` namespace automatically from
+``register_namespace``. Set ``__colosseum_domain__`` explicitly when they should differ.

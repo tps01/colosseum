@@ -3,37 +3,90 @@ Plugins and extensions
 
 Plugins are separate Python distributions discovered from setuptools entry points.
 The copy-ready template is under ``examples/plugins/colosseum_template``.
+``colosseum-shared`` is a minimal first-party example (namespace only).
 
-Runtime registration
---------------------
+A working plugin needs only three things. Config, evidence decorators, and resource
+helpers are optional layers.
 
-A plugin exposes a registration callable::
+Layer 0 — Minimal plugin
+------------------------
 
-   from colosseum.config.sections import ConfigSectionSpec
+1. An installable package with a ``colosseum.plugins`` entry point.
+2. ``register(registry)`` that calls ``register_namespace``.
+3. An API module exposed as ``col.<namespace>.*``.
+
+Example::
+
+   # acme_bench/__init__.py
    from colosseum.logging import get_logger
+   from colosseum.plugins.registry import PluginRegistry
 
    _logger = get_logger("colosseum.acme")
 
-   def register(registry):
-       from acme_plugin import api
+   def register(registry: PluginRegistry) -> None:
+       from acme_bench import api
 
        registry.register_namespace("acme", api)
        _logger.debug("Registered col.acme namespace")
-       registry.register_config_section(
-           ConfigSectionSpec(
-               dotted_path="acme.device",
-               id_field="device_id",
-               required_keys=("resource",),
-           )
-       )
 
 Declare it in ``pyproject.toml``::
 
    [project.entry-points."colosseum.plugins"]
-   acme = "acme_plugin:register"
+   acme = "acme_bench:register"
 
-The namespace becomes ``col.acme`` after the distribution is installed. Duplicate
-namespaces or config sections raise ``PluginRegistrationError``.
+After ``pip install -e .`` (or a wheel install) in the same environment as
+``colosseum-core``, the namespace becomes ``col.acme``. Source checkouts alone do
+not provide entry-point metadata.
+
+The entry-point **key** is metadata only. The runtime namespace is the string passed
+to ``register_namespace``. Duplicate namespaces or config sections raise
+``PluginRegistrationError``. A failing ``register()`` also fails fast at load time.
+
+Reserved namespaces (do not register): ``equipment``, ``shared``, ``io``, ``host``,
+``messaging``.
+
+Layer 1 — Evidence decorators
+-----------------------------
+
+Use ``command``, ``measurement``, and ``verification`` from ``colosseum.decorators``
+when you need recorded pass/fail evidence. See :doc:`measurements_verifications`.
+
+``register_namespace`` sets the evidence domain to the namespace name when the
+package has not already set ``__colosseum_domain__``. Override that attribute on the
+package (or function) when the domain should differ.
+
+Layer 2 — Bench configuration
+-----------------------------
+
+Only plugins that own TOML sections need this. Register a section, then document
+matching ``[[dotted.path]]`` rows for end users::
+
+   from colosseum.config.sections import ConfigSectionSpec
+
+   registry.register_config_section(
+       ConfigSectionSpec(
+           dotted_path="acme.device",
+           id_field="device_id",
+           required_keys=("serial",),
+           optional_keys=("label",),
+       )
+   )
+
+Unknown keys produce warnings. Missing required keys raise when the row is loaded.
+Registered section keys appear in the generated bench configuration reference when
+the plugin is installed during a core docs build.
+
+Layer 3 — Resources and extras
+------------------------------
+
+Optional registry hooks:
+
+* ``registry.register_config_validator(dotted_path, fn)`` — return warning strings.
+* ``registry.register_shutdown(callable)`` — cleanup on ``col.endex()`` (LIFO order).
+
+Connection helpers (config lookup, ``resource_cache``) are ordinary module functions,
+not a framework decorator. The template demo reads config inline; first-party plugins
+such as messaging and equipment show cached-resource patterns.
 
 Logging
 -------
@@ -44,40 +97,18 @@ Plugins log through ``colosseum.logging.get_logger`` with a name under the
 
    from colosseum.logging import get_logger
 
-   _logger = get_logger("colosseum.template")
+   _logger = get_logger("colosseum.acme")
 
-Use ``colosseum.<namespace>`` to match the registered namespace (``col.template``
-→ ``colosseum.template``). Child loggers such as ``colosseum.template.api`` are
-fine. Names like ``template`` or ``colosseum_template`` never reach ``debug.log``.
+Use ``colosseum.<namespace>`` to match the registered namespace (``col.acme`` →
+``colosseum.acme``). Child loggers such as ``colosseum.acme.api`` are fine. Names
+like ``acme`` or ``acme_bench`` never reach ``debug.log``.
 
 The file handler records DEBUG and above. Console output, when enabled, defaults
-to INFO, so plugin ``_logger.debug(...)`` is for internals that belong in the run
-artifact without flooding stdout. Decorators already record command, measurement,
-and verification pass/fail; do not duplicate that at INFO.
-
-The copy-ready template under ``examples/plugins/colosseum_template`` shows this
-pattern in ``api.py``, ``__init__.py``, ``connections.py``, and ``validators.py``.
-First-party plugins (host, shared, messaging, equipment) use the same names:
-``colosseum.host``, ``colosseum.shared``, ``colosseum.messaging``,
-``colosseum.equipment``, and ``colosseum.io``.
-
-Decorated APIs
---------------
-
-Plugin API functions use ``command``, ``measurement``, and ``verification`` from
-``colosseum.decorators``. Set ``__colosseum_domain__`` on the package when evidence
-should use a domain other than ``core``.
-
-Shutdown hooks registered with ``registry.register_shutdown`` run in reverse order when
-``col.endex()`` finalizes the runtime.
+to INFO. Decorators already record command, measurement, and verification
+pass/fail; do not duplicate that at INFO.
 
 Documentation
 -------------
 
 Plugins document themselves (README and any project-local docs). Register
-``colosseum.plugins`` only. When your plugin is installed during a core docs
-build, its ``ConfigSectionSpec`` keys appear in the generated bench
-configuration reference.
-
-Source checkouts do not provide entry-point metadata. Use ``pip install -e .`` while
-developing a plugin.
+``colosseum.plugins`` only.
