@@ -12,6 +12,8 @@ from .results.aggregation import ResultAggregator
 if TYPE_CHECKING:
     from .config.loader import ConfigStore
     from .plugins.registry import PluginRegistry
+else:
+    SuiteSlotResult = object  # noqa: A001 — runtime placeholder for forward ref
 
 _ACTIVE_CONTEXT: RuntimeContext | None = None
 
@@ -37,6 +39,16 @@ class RuntimeContext:
     runtime_ready: bool = False
     resource_cache: dict[str, Any] = field(default_factory=dict)
     config_warnings: list[str] = field(default_factory=list)
+    suite_output_dir: Path | None = None
+    suite_test_results: list[Any] = field(default_factory=list)
+    suite_slot_results: list[Any] = field(default_factory=list)
+    slot_finalized: bool = False
+    slot_affects_suite_result: bool = False
+    suite_finalized: bool = False
+    rip_cord_triggered: bool = False
+    slot_script_path: Path | None = None
+    slot_test_index: int | None = None
+    slot_repeat_index: int | None = None
 
 
 def get_context() -> RuntimeContext:

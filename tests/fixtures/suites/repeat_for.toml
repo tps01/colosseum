@@ -1,0 +1,3 @@
+name = "repeat_for"
+tests = [{ path = "../scripts/count_repeat.py", repeat_for = "1s" }]
+teardown = ["../scripts/teardown_ok.py"]

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.helpers import latest_output_dir, query_db
+from tests.support.helpers import latest_suite_container, query_db, slot_dirs_matching
 
 from tests.support.helpers import REPO_ROOT as REPO
 
@@ -37,12 +37,11 @@ def test_run_suite_fixture_happy(core_config, fixtures_dir, isolated_cwd, subpro
     suite = fixtures_dir / "suites" / "happy.toml"
     proc = _cli_run_suite(suite, core_config, isolated_cwd, subprocess_env)
     assert proc.returncode == 0, proc.stderr
-    run_dir = latest_output_dir(isolated_cwd)
-    summary = (run_dir / "summary.txt").read_text(encoding="utf-8")
+    container = latest_suite_container(isolated_cwd)
+    summary = (container / "summary.txt").read_text(encoding="utf-8")
     assert "fixture_happy" in summary or "Overall result: PASS" in summary
-    assert (run_dir / "execution.sqlite").is_file()
-    meas_count = query_db(run_dir, "SELECT COUNT(*) FROM measurements")[0][0]
-    assert meas_count == 0  # pass_test is a no-op; suite still succeeds
+    test_slot = slot_dirs_matching(container, "pass_test")[-1]
+    assert (test_slot / "execution.sqlite").is_file()
 
 
 @pytest.mark.requirement("E2E-W3-01")
@@ -50,24 +49,25 @@ def test_run_suite_smoke_core_api(core_config, fixtures_dir, isolated_cwd, subpr
     suite = fixtures_dir / "suites" / "smoke.toml"
     proc = _cli_run_suite(suite, core_config, isolated_cwd, subprocess_env)
     assert proc.returncode == 0, proc.stderr
-    run_dir = latest_output_dir(isolated_cwd)
+    container = latest_suite_container(isolated_cwd)
+    test_slot = slot_dirs_matching(container, "optional_fail_test")[-1]
     domains = {
         row[0]
-        for row in query_db(run_dir, "SELECT DISTINCT domain FROM measurements")
+        for row in query_db(test_slot, "SELECT DISTINCT domain FROM measurements")
     }
     assert domains == {"core"}
-    summary = (run_dir / "summary.txt").read_text(encoding="utf-8")
+    summary = (container / "summary.txt").read_text(encoding="utf-8")
     assert "Overall result: PASS" in summary
 
 
-def test_run_suite_setup_fail_exits_one(core_config, fixtures_dir, isolated_cwd, subprocess_env) -> None:
+def test_run_suite_setup_fail_exits_zero_without_rip_cord(
+    core_config, fixtures_dir, isolated_cwd, subprocess_env
+) -> None:
     suite = fixtures_dir / "suites" / "setup_fail.toml"
     proc = _cli_run_suite(suite, core_config, isolated_cwd, subprocess_env)
-    assert proc.returncode == 1, proc.stderr
-    run_dir = latest_output_dir(isolated_cwd)
-    assert (run_dir / "summary.txt").is_file()
-    starts = "\n".join(m[0] for m in query_db(run_dir, "SELECT message FROM events WHERE message LIKE 'script_start:%'"))
-    assert "pass_test.py" not in starts
+    assert proc.returncode == 0, proc.stderr
+    container = latest_suite_container(isolated_cwd)
+    assert slot_dirs_matching(container, "pass_test")
 
 
 def test_run_suite_bad_config_exits_one(fixtures_dir, isolated_cwd, subprocess_env) -> None:
