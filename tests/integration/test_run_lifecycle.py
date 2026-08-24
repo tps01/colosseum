@@ -75,6 +75,28 @@ def test_endex_second_call_reuses_final_exit_code(core_config, isolated_cwd) -> 
     assert exc.value.code == 1
 
 
+def test_required_command_error_endex_fails(core_config, isolated_cwd) -> None:
+    from colosseum.decorators import command
+
+    @command
+    def _boom(*, key: str = "") -> None:
+        raise RuntimeError("command procedural failure")
+
+    load_config(core_config)
+    with pytest.raises(RuntimeError, match="command procedural failure"):
+        _boom(key="step")
+    run_endex_expect_code(1)
+    run_dir = latest_output_dir(isolated_cwd)
+    assert run_dir.name.endswith("-fail")
+    rows = query_db(
+        run_dir,
+        "SELECT status, message FROM commands WHERE command=?",
+        ("_boom",),
+    )
+    assert rows and rows[0][0] == "ERROR"
+    assert "command procedural failure" in rows[0][1]
+
+
 def test_optional_fail_still_exits_zero(core_config, isolated_cwd) -> None:
     load_config(core_config)
     measure_value(key="vrail_3v3", value=3.3)
