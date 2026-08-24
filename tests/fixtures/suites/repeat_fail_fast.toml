@@ -1,0 +1,4 @@
+name = "repeat_fail_fast"
+fail_fast = true
+tests = [{ path = "../scripts/repeat_fail_first.py", repeat_count = 3 }]
+teardown = ["../scripts/teardown_ok.py"]

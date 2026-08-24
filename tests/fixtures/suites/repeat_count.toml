@@ -1,0 +1,4 @@
+name = "repeat_count"
+tests = [{ path = "../scripts/count_repeat.py", repeat_count = 3 }]
+between_tests = ["../scripts/count_between.py"]
+teardown = ["../scripts/teardown_ok.py"]

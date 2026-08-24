@@ -1,0 +1,5 @@
+name = "setup_fail_rip_cord"
+rip_cord = true
+setup = ["../scripts/setup_fail.py"]
+tests = ["../scripts/pass_test.py"]
+teardown = ["../scripts/teardown_ok.py"]
