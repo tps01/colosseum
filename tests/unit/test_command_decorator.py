@@ -38,16 +38,24 @@ def test_command_records_pass_row(ctx) -> None:
     assert row["status"] == "PASS"
 
 
-def test_command_error_fails_run_without_raising(ctx) -> None:
-    assert _failing() is None
+def test_command_error_records_and_raises(ctx) -> None:
+    with pytest.raises(RuntimeError, match="bench action failed"):
+        _failing()
     assert ctx.result_aggregator.overall_pass() is False
     row = ctx.db.fetch_table_rows("commands")[-1]
     assert row["status"] == "ERROR"
+    assert "bench action failed" in row["message"]
+    events = ctx.db.fetch_table_rows("events")
+    assert any(e["level"] == "ERROR" and "bench action failed" in e["message"] for e in events)
 
 
 def test_optional_command_error_does_not_fail_run(ctx) -> None:
-    _failing(optional=True)
+    assert _failing(optional=True) is None
     assert ctx.result_aggregator.overall_pass() is True
+    row = ctx.db.fetch_table_rows("commands")[-1]
+    assert row["status"] == "ERROR"
+    assert row["optional"] in (1, True)
+    assert "bench action failed" in row["message"]
 
 
 def test_logical_fail_recorded(ctx) -> None:
@@ -60,6 +68,7 @@ def test_decorator_metadata() -> None:
 
 
 def test_aggregator_exit_code_with_command_error(ctx) -> None:
-    _failing()
+    with pytest.raises(RuntimeError, match="bench action failed"):
+        _failing()
     assert ResultAggregator().exit_code() == 0
     assert ctx.result_aggregator.exit_code() == 1

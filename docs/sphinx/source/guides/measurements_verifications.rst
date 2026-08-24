@@ -9,8 +9,10 @@ same ``debug.log`` and are distinct from decorator pass/fail records.
 Commands
 --------
 
-``@command`` records setup and action calls. A required command failure contributes to
-the final run status. ``optional=True`` records a failure without failing the run.
+``@command`` records setup and action calls. When a required command raises, Colosseum
+records an ERROR row and event, then re-raises so remaining script steps do not run.
+The runner still calls ``col.endex()`` to write the FAIL result. ``optional=True``
+records the ERROR without failing the run or aborting the script.
 
 Measurements
 ------------
@@ -26,7 +28,9 @@ measurements in the verifier body (for example
 ``get_context().db.get_measurement(...)``) and return
 ``missing_measurement_result`` when evidence is absent.
 
-Optional verifications may fail without failing the aggregate result.
+Unlike commands, verification exceptions become ``VerificationResult(status="ERROR")``
+and do not abort the script. Optional verifications may fail without failing the
+aggregate result.
 
 Domains
 -------

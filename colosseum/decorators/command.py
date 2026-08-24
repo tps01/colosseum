@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
+from inspect import signature
 from typing import Any, TypeVar, overload
 
 from ..database import CommandRow
@@ -45,15 +46,20 @@ def command(_func: Callable[..., Any] | None = None) -> object:
 
     :param key: Optional evidence key stored with the command row.
     :type key: str
-    :param optional: When ``True``, ERROR/FAIL on the command does not fail the run.
+    :param optional: When ``True``, ERROR/FAIL is recorded without failing the run or
+        aborting remaining script steps.
     :type optional: bool
 
-    :returns: The decorated callable. On exception, returns ``None`` after recording ERROR.
+    :returns: The decorated callable. On a required-command exception, records ERROR then
+        re-raises so remaining ``main()`` steps do not run; the runner still calls
+        ``col.endex()`` to write the FAIL result. With ``optional=True``, records ERROR
+        and returns ``None`` without re-raising.
     """
 
     def decorate(func: Callable[..., Any]) -> Callable[..., Any]:
         domain = resolve_domain(func)
         command_name = resolve_command(func)
+        accepts_optional = "optional" in signature(func).parameters
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
@@ -61,8 +67,11 @@ def command(_func: Callable[..., Any] | None = None) -> object:
             ensure_runtime_ready(ctx)
             key = str(kwargs.get("key", ""))
             optional = bool(kwargs.get("optional", False))
+            call_kwargs = dict(kwargs)
+            if not accepts_optional:
+                call_kwargs.pop("optional", None)
             try:
-                value = func(*args, **kwargs)
+                value = func(*args, **call_kwargs)
                 if isinstance(value, CommandResult):
                     result = value
                     stored = None
@@ -134,7 +143,9 @@ def command(_func: Callable[..., Any] | None = None) -> object:
                     command=command_name,
                     domain=domain,
                 )
-                return None
+                if optional:
+                    return None
+                raise
 
         setattr(wrapper, COLOSSEUM_DECORATOR, "command")
         return wrapper
