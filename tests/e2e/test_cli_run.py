@@ -90,6 +90,27 @@ def test_cli_run_script_crash_exits_one_and_finalizes(core_config, isolated_cwd,
     assert meta.get("exit_code") == "1"
 
 
+def test_cli_run_command_error_records_row_and_fails(
+    core_config, isolated_cwd, subprocess_env
+) -> None:
+    script = REPO / "tests" / "fixtures" / "scripts" / "command_error_test.py"
+    proc = _cli_run(script, core_config, isolated_cwd, subprocess_env)
+    assert proc.returncode == 1, proc.stderr
+    run_dir = latest_output_dir(isolated_cwd)
+    meta = dict(query_db(run_dir, "SELECT key, value FROM run_metadata"))
+    assert meta.get("overall_status") == "FAIL"
+    assert meta.get("exit_code") == "1"
+    rows = query_db(
+        run_dir,
+        "SELECT status, message, optional FROM commands WHERE command=?",
+        ("_boom",),
+    )
+    assert rows, "expected ERROR command row for _boom"
+    assert rows[0][0] == "ERROR"
+    assert "command procedural failure" in rows[0][1]
+    assert rows[0][2] in (0, False)
+
+
 def test_cli_run_system_exit_marks_script_failure(core_config, isolated_cwd, subprocess_env) -> None:
     script = isolated_cwd / "sys_exit_test.py"
     script.write_text(
