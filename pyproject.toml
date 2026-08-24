@@ -1,1 +1,73 @@
-[build-system]requires = ["setuptools>=77", "wheel"]build-backend = "setuptools.build_meta"[project]name = "colosseum-core"version = "0.15.8"description = "Colosseum test automation framework (core runtime)"requires-python = ">=3.9"license = "MIT"dependencies = [  "tomli>=2.0,<3; python_version < '3.11'",  "typing_extensions>=4.0,<5; python_version < '3.10'",  "customtkinter>=5.2,<6",  "pytest>=8.0,<9",  "sphinx>=7.0,<9",  "bandit[toml]>=1.7,<2",  "vulture>=2.11,<3",  "ruff>=0.8,<1",  "mypy>=1.11,<2",][tool.pytest.ini_options]testpaths = ["tests/unit", "tests/integration", "tests/e2e"]pythonpath = ["."]markers = [    "requirement(id): traceability to test-plan requirement ID",    "gui: requires display and tkinter",][project.scripts]colosseum = "colosseum.runner.cli:main"[tool.setuptools.packages.find]include = ["colosseum", "colosseum.*"][tool.setuptools.package-data]colosseum = ["py.typed"][tool.ruff]target-version = "py39"line-length = 100src = ["colosseum", "scripts"][tool.ruff.lint]select = ["E", "F", "W", "I", "B", "UP", "ANN", "ARG", "SIM", "RET", "PTH"][tool.mypy]python_version = "3.12"packages = ["colosseum"]exclude = ["tests/", "build/", "examples/"]strict = truewarn_unused_ignores = trueshow_error_codes = true[[tool.mypy.overrides]]module = "scripts.*"disallow_untyped_defs = truecheck_untyped_defs = true[[tool.mypy.overrides]]module = [  "customtkinter.*",  "tkinter.*",  "sphinx.*",  "pytest",  "tomli",  "tomllib",]ignore_missing_imports = true[tool.bandit]exclude_dirs = ["tests", "build", "examples", "docs"]
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "colosseum-core"
+version = "0.15.8"
+description = "Colosseum test automation framework (core runtime)"
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = [
+  "tomli>=2.0,<3; python_version < '3.11'",
+  "typing_extensions>=4.0,<5; python_version < '3.10'",
+  "customtkinter>=5.2,<6",
+  "pytest>=8.0,<9",
+  "sphinx>=7.0,<9",
+  "bandit[toml]>=1.7,<2",
+  "vulture>=2.11,<3",
+  "ruff>=0.8,<1",
+  "mypy>=1.11,<2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/integration", "tests/e2e"]
+pythonpath = ["."]
+markers = [
+    "requirement(id): traceability to test-plan requirement ID",
+    "gui: requires display and tkinter",
+]
+
+[project.scripts]
+colosseum = "colosseum.runner.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["colosseum", "colosseum.*"]
+
+[tool.setuptools.package-data]
+colosseum = ["py.typed"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+src = ["colosseum", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ANN", "ARG", "SIM", "RET", "PTH"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["colosseum"]
+exclude = ["tests/", "build/", "examples/"]
+strict = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "scripts.*"
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+  "customtkinter.*",
+  "tkinter.*",
+  "sphinx.*",
+  "pytest",
+  "tomli",
+  "tomllib",
+]
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "build", "examples", "docs"]
