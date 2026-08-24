@@ -11,7 +11,7 @@ from .decorators import (
     verification,
 )
 from .plugins.namespace import LazyNamespaceProxy
-from .results import endex
+from .results.exit_policy import endex
 
 try:
     __version__ = metadata.version("colosseum-core")

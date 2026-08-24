@@ -13,11 +13,21 @@ from .runs import (
     list_run_directory_entries,
     read_summary_json,
 )
+from .suite_slots import (
+    SuiteSlotResult,
+    begin_script_slot,
+    ensure_suite_runtime_ready,
+    finalize_script_slot,
+)
 
 __all__ = [
+    "SuiteSlotResult",
     "allocate_run_directory",
+    "begin_script_slot",
     "ensure_output_dir",
     "ensure_runtime_ready",
+    "ensure_suite_runtime_ready",
+    "finalize_script_slot",
     "find_output_directories",
     "find_run_directory",
     "list_run_directory_entries",

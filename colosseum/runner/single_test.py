@@ -39,6 +39,8 @@ def run_script(path: Path) -> None:
     except SystemExit as exc:
         if ctx.finalized:
             raise
+        if ctx.suite_output_dir is not None and ctx.slot_finalized:
+            return
         code = _system_exit_code(exc)
         message = f"script_exit:{resolved}: code={code}"
         ctx.db.insert_event("ERROR", "runner", message)

@@ -42,7 +42,6 @@ def _finalize_context(ctx: RuntimeContext) -> int:
     if ctx.logger is not None:
         ctx.logger.debug("Running plugin shutdown hooks")
     ctx.plugin_registry.run_shutdown()
-    # Empty prefix matches every remaining key after plugin shutdown hooks.
     close_cached_resources(ctx.resource_cache, (("",),), logger=ctx.logger)
     measurement_count = 0
     command_count = 0
@@ -65,6 +64,33 @@ def _finalize_context(ctx: RuntimeContext) -> int:
             measurement_count=measurement_count,
             command_count=command_count,
         )
+    ctx.finalized = True
+    ctx.final_exit_code = code
+    return code
+
+
+def finalize_suite(ctx: RuntimeContext) -> int:
+    """Finalize a suite container after all script slots have completed."""
+    from ..summary.suite_writer import SuiteSummaryWriter
+
+    writer = SuiteSummaryWriter()
+    code = writer.suite_exit_code(ctx)
+    overall = "PASS" if code == 0 else "FAIL"
+
+    if ctx.logger is not None:
+        ctx.logger.info("Suite overall result: %s (exit %s)", overall, code)
+
+    ctx.plugin_registry.run_shutdown()
+    close_cached_resources(ctx.resource_cache, (("",),), logger=ctx.logger)
+
+    if ctx.logger is not None:
+        _close_logger_handlers(ctx.logger)
+
+    if ctx.suite_output_dir is not None and not ctx.no_artifacts:
+        writer.write(ctx.suite_output_dir, ctx, exit_code=code, overall=overall)
+        ctx.suite_output_dir = rename_run_directory_for_result(ctx.suite_output_dir, overall)
+
+    ctx.suite_finalized = True
     ctx.finalized = True
     ctx.final_exit_code = code
     return code
@@ -110,18 +136,11 @@ def register_auto_finalize_hooks() -> None:
     _AUTO_FINALIZE_HOOKS_REGISTERED = True
 
 
-def endex() -> NoReturn:
-    """Finalize the active run and exit the process.
+def endex() -> None:
+    """Finalize the active run.
 
-    Flushes logs, writes ``summary.txt`` and ``summary.json``, closes the SQLite
-    database and cached instrument resources, runs plugin shutdown hooks, then
-    exits with ``0`` when all required verifications pass or ``1`` otherwise.
-
-    :returns: Does not return; raises ``SystemExit`` with the aggregate exit code.
-    :rtype: NoReturn
-
-    :raises SystemExit: Exit code ``1`` when no run context exists or the run was
-        already finalized; otherwise ``0`` (PASS) or ``1`` (FAIL).
+    During a suite run, finalizes the current script slot and returns without
+    exiting the process. For single-test runs, exits with the aggregate code.
     """
     try:
         ctx = get_context()
@@ -131,5 +150,26 @@ def endex() -> NoReturn:
     if ctx.finalized:
         raise SystemExit(ctx.final_exit_code if ctx.final_exit_code is not None else 1)
 
+    if ctx.suite_output_dir is not None and not ctx.suite_finalized:
+        from ..output.suite_slots import finalize_script_slot
+
+        if ctx.slot_finalized:
+            return
+        if ctx.slot_script_path is None:
+            raise SystemExit(1)
+        finalize_script_slot(
+            ctx,
+            script_path=ctx.slot_script_path,
+            test_index=ctx.slot_test_index,
+            repeat_index=ctx.slot_repeat_index,
+        )
+        return
+
     code = _finalize_context(ctx)
     raise SystemExit(code)
+
+
+def endex_process_exit() -> NoReturn:
+    """Legacy alias: finalize and always exit the process."""
+    endex()
+    raise SystemExit(1)

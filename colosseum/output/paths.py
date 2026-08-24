@@ -22,9 +22,17 @@ def sanitize_logical_name(logical_name: str) -> str:
     return value[:64]
 
 
-def allocate_run_directory(cwd: Path, logical_name: str) -> Path:
-    outputs_root = cwd / "outputs"
-    outputs_root.mkdir(parents=True, exist_ok=True)
+def allocate_run_directory(
+    cwd: Path,
+    logical_name: str,
+    *,
+    parent: Path | None = None,
+) -> Path:
+    if parent is not None:
+        outputs_root = parent
+    else:
+        outputs_root = cwd / "outputs"
+        outputs_root.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     run_name = f"{stamp}_{sanitize_logical_name(logical_name)}"
     candidate = outputs_root / run_name

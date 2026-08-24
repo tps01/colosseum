@@ -26,6 +26,15 @@ def test_allocate_run_directory_format_and_collision(isolated_cwd) -> None:
     assert second.name.endswith("_1") or first.name != second.name
 
 
+def test_allocate_run_directory_under_parent(isolated_cwd) -> None:
+    parent = isolated_cwd / "outputs" / "suite_container"
+    parent.mkdir(parents=True)
+    child = allocate_run_directory(isolated_cwd, "probe", parent=parent)
+    assert child.parent == parent
+    assert child.name.startswith("20")
+    assert child.name.endswith("_probe")
+
+
 def test_rename_run_directory_for_result_appends_status(isolated_cwd) -> None:
     run_dir = isolated_cwd / "outputs" / "2026-01-01_120000_smoke"
     run_dir.mkdir(parents=True)

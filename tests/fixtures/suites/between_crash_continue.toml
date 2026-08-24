@@ -1,0 +1,5 @@
+name = "between_crash_continue"
+fail_fast = false
+tests = ["../scripts/pass_test.py", "../scripts/pass_test.py"]
+between_tests = ["../scripts/crash_test.py"]
+teardown = ["../scripts/teardown_ok.py"]

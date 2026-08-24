@@ -7,7 +7,7 @@ from pathlib import Path
 from ..config import ConfigError, load_config
 from ..context import init_context
 from ..output import ensure_runtime_ready
-from ..results import endex
+from ..results.exit_policy import endex
 from .single_test import ScriptRunError, run_script
 from .suite import SuiteError, run_suite
 
