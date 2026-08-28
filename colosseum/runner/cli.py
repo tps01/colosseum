@@ -29,6 +29,12 @@ def _add_common_run_options(parser: argparse.ArgumentParser) -> None:
         help="TOML configuration consumed by installed plugins",
     )
     parser.add_argument(
+        "--metadata",
+        dest="metadata_path",
+        metavar="PATH",
+        help="WATS metadata YAML (test_metadata block)",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         action="store_true",
@@ -96,14 +102,19 @@ def _print_help(parser: argparse.ArgumentParser, topic: str | None = None) -> No
     parser.error(f"unknown help topic: {topic}")
 
 
-def _load_run_config(config_path: str | None) -> None:
+def _load_run_config(config_path: str | None, metadata_path: str | None = None) -> None:
     if config_path:
-        load_config(config_path)
+        load_config(config_path, metadata_path=metadata_path)
+    elif metadata_path:
+        from ..config.metadata import load_metadata
+
+        load_metadata(metadata_path)
 
 
 def _run_single_test(
     test_path: Path,
     config_path: str | None,
+    metadata_path: str | None,
     debug: bool,
     *,
     no_artifacts: bool = False,
@@ -111,10 +122,11 @@ def _run_single_test(
     ctx = init_context(
         test_case_name=test_path.stem,
         config_path=Path(config_path).resolve() if config_path else None,
+        metadata_path=Path(metadata_path).resolve() if metadata_path else None,
         no_artifacts=no_artifacts,
     )
     ctx.debug_logging = debug
-    _load_run_config(config_path)
+    _load_run_config(config_path, metadata_path)
     ensure_runtime_ready(ctx)
     try:
         run_script(test_path)
@@ -150,6 +162,7 @@ def run_cli(argv: list[str] | None = None) -> int:
             _run_single_test(
                 test_path,
                 args.config_path,
+                getattr(args, "metadata_path", None),
                 bool(args.debug),
                 no_artifacts=bool(getattr(args, "no_artifacts", False)),
             )
@@ -166,6 +179,7 @@ def run_cli(argv: list[str] | None = None) -> int:
             run_suite(
                 suite_path,
                 config,
+                metadata_path=Path(args.metadata_path).resolve() if args.metadata_path else None,
                 debug=bool(args.debug),
                 no_artifacts=bool(getattr(args, "no_artifacts", False)),
             )

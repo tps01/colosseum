@@ -29,9 +29,12 @@ class VerificationRow:
     key: str
     expected: Any = None
     actual: Any = None
+    tolerance: float | None = None
+    compare_op: str | None = None
     status: str = "PASS"
     optional: bool = False
     message: str | None = ""
+    step_name: str | None = None
     timestamp: str = ""
     id: int | None = None
 

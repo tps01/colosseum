@@ -1,0 +1,15 @@
+##################################
+# WATS metadata for Colosseum test runs.
+# Load with: col.config.load_metadata("metadata_example.yaml")
+# or: colosseum run my_test.py --metadata metadata_example.yaml
+##################################
+
+test_metadata:
+  location: TBD_PHYSICAL_LOCATION
+  process_code: "1234"
+  revision: "1.2.3"
+  serial_number: "123"
+  test_intent: Acceptance
+  user_name: USERNAME
+  uut: PARTNUMBER
+  wats_folder:

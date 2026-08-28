@@ -134,8 +134,9 @@ class DatabaseManager:
         cur = conn.execute(
             """
             INSERT INTO verifications
-            (domain, command, key, expected_json, actual_json, status, optional, message, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (domain, command, key, expected_json, actual_json, tolerance_json, compare_op,
+             status, optional, message, step_name, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 row.domain,
@@ -143,9 +144,12 @@ class DatabaseManager:
                 row.key,
                 json.dumps(row.expected),
                 json.dumps(row.actual),
+                json.dumps(row.tolerance),
+                row.compare_op,
                 row.status,
                 1 if row.optional else 0,
                 row.message,
+                row.step_name,
                 ts,
             ),
         )
@@ -263,13 +267,14 @@ class DatabaseManager:
         conn = self._require_conn()
         cur = conn.execute(
             """
-            SELECT id, domain, command, key, expected_json, actual_json, status,
-                   optional, message, timestamp
+            SELECT id, domain, command, key, expected_json, actual_json, tolerance_json,
+                   compare_op, status, optional, message, step_name, timestamp
             FROM verifications ORDER BY id ASC
             """
         )
         rows: list[VerificationRecord] = []
         for item in cur.fetchall():
+            tolerance = json.loads(item[6]) if item[6] is not None else None
             rows.append(
                 VerificationRecord(
                     id=item[0],
@@ -278,10 +283,13 @@ class DatabaseManager:
                     key=item[3],
                     expected=json.loads(item[4]) if item[4] is not None else None,
                     actual=json.loads(item[5]) if item[5] is not None else None,
-                    status=item[6],
-                    optional=bool(item[7]),
-                    message=item[8],
-                    timestamp=item[9],
+                    tolerance=tolerance,
+                    compare_op=item[7],
+                    status=item[8],
+                    optional=bool(item[9]),
+                    message=item[10],
+                    step_name=item[11],
+                    timestamp=item[12],
                 )
             )
         return rows

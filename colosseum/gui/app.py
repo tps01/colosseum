@@ -117,6 +117,7 @@ class ColosseumApp:
         self._test_path = ctk.StringVar(value="")
         self._suite_path = ctk.StringVar(value="")
         self._config_path = ctk.StringVar(value=os.environ.get("COLOSSEUM_BENCH_CONFIG", ""))
+        self._metadata_path = ctk.StringVar(value=os.environ.get("COLOSSEUM_METADATA_PATH", ""))
         self._debug = ctk.BooleanVar(value=False)
         self._run_widgets: dict[tuple[str, Path], Any] = {}
         self._browser_snapshot = RunBrowserSnapshot(rows=[])
@@ -177,6 +178,14 @@ class ColosseumApp:
         )
         ctk.CTkCheckBox(run_frame, text="Debug", variable=self._debug).grid(
             row=2, column=3, padx=4, sticky="w"
+        )
+
+        ctk.CTkLabel(run_frame, text="Metadata").grid(row=3, column=0, padx=4, pady=2, sticky="w")
+        ctk.CTkEntry(run_frame, textvariable=self._metadata_path).grid(
+            row=3, column=1, padx=4, pady=2, sticky="ew"
+        )
+        ctk.CTkButton(run_frame, text="Browse", width=80, command=self._browse_metadata).grid(
+            row=3, column=2, padx=4
         )
 
         self._stop_btn = ctk.CTkButton(
@@ -355,8 +364,20 @@ class ColosseumApp:
         if path:
             self._config_path.set(path)
 
+    def _browse_metadata(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Select metadata YAML",
+            filetypes=[("YAML", "*.yaml;*.yml"), ("All files", "*.*")],
+        )
+        if path:
+            self._metadata_path.set(path)
+
     def _config_value(self) -> str | None:
         value = self._config_path.get().strip()
+        return value or None
+
+    def _metadata_value(self) -> str | None:
+        value = self._metadata_path.get().strip()
         return value or None
 
     def _run_test(self) -> None:
@@ -366,7 +387,15 @@ class ColosseumApp:
         path = Path(path_str).resolve()
         if not path.is_file():
             return
-        self._start_run(RunRequest(RunKind.TEST, path, self._config_value(), self._debug.get()))
+        self._start_run(
+            RunRequest(
+                RunKind.TEST,
+                path,
+                self._config_value(),
+                self._metadata_value(),
+                self._debug.get(),
+            )
+        )
 
     def _run_suite(self) -> None:
         path_str = self._suite_path.get().strip()
@@ -375,7 +404,15 @@ class ColosseumApp:
         path = Path(path_str).resolve()
         if not path.is_file():
             return
-        self._start_run(RunRequest(RunKind.SUITE, path, self._config_value(), self._debug.get()))
+        self._start_run(
+            RunRequest(
+                RunKind.SUITE,
+                path,
+                self._config_value(),
+                self._metadata_value(),
+                self._debug.get(),
+            )
+        )
 
     def _start_run(self, request: RunRequest) -> None:
         if self._worker.is_running():

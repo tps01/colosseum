@@ -17,6 +17,8 @@ Output artifacts
      - End-of-run human summary (written by ``col.endex()``)
    * - ``summary.json``
      - End-of-run machine-readable summary (written by ``col.endex()``)
+   * - ``wats_<datetime>_<script>.json``
+     - WATS WSJF test report (best-effort defaults when metadata is not configured)
 
 The output directory is created on first log or database write. Suite runs use the suite ``name`` as the directory stem. Completed output directories are renamed with the final result, for example ``outputs/<timestamp>_<name>-pass/`` or ``outputs/<timestamp>_<name>-fail/``. Disable persisted output with ``--no-artifacts``, ``load_config(..., no_artifacts=True)``, or ``COLOSSEUM_NO_ARTIFACTS=1`` (see :doc:`running_tests`).
 

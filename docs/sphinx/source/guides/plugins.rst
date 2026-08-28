@@ -58,8 +58,14 @@ package (or function) when the domain should differ.
 Layer 2 — Bench configuration
 -----------------------------
 
-Only plugins that own TOML sections need this. Register a section, then document
-matching ``[[dotted.path]]`` rows for end users::
+Only plugins that own TOML sections need this. See :doc:`configuration` for load
+behavior. Each ``ConfigSectionSpec`` is one table type:
+
+* exactly one ``dotted_path``
+* exactly one ``id_field`` (integer, unique per section)
+* any number of ``required_keys`` and ``optional_keys`` (including none)
+
+Register another spec for another dotted path. Then document matching rows::
 
    from colosseum.config.sections import ConfigSectionSpec
 
@@ -72,9 +78,16 @@ matching ``[[dotted.path]]`` rows for end users::
        )
    )
 
-Unknown keys produce warnings. Missing required keys raise when the row is loaded.
-Registered section keys appear in the generated bench configuration reference when
-the plugin is installed during a core docs build.
+End-user bench TOML::
+
+   [[acme.device]]
+   device_id = 1
+   serial = "DUT-001"
+   # label = "optional"
+
+Unknown keys produce warnings. Missing required keys raise when the row is loaded
+with ``require_item``. Registered section keys appear in the generated bench
+configuration reference when the plugin is installed during a core docs build.
 
 Layer 3 — Resources and extras
 ------------------------------

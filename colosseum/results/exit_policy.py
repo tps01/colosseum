@@ -45,9 +45,13 @@ def _finalize_context(ctx: RuntimeContext) -> int:
     close_cached_resources(ctx.resource_cache, (("",),), logger=ctx.logger)
     measurement_count = 0
     command_count = 0
+    verifications = []
+    measurements = []
     if ctx.db.is_initialized():
         measurement_count = ctx.db.count_rows("measurements")
         command_count = ctx.db.count_rows("commands")
+        verifications = ctx.db.fetch_all_verifications()
+        measurements = ctx.db.fetch_all_measurements()
     ctx.db.flush()
     if ctx.logger is not None:
         ctx.logger.info("Overall result: %s (exit %s)", overall, code)
@@ -55,6 +59,7 @@ def _finalize_context(ctx: RuntimeContext) -> int:
     ctx.db.close()
     if ctx.output_dir is not None:
         from ..summary.writer import SummaryWriter
+        from ..summary.wats import write_wats_report
 
         ctx.output_dir = rename_run_directory_for_result(ctx.output_dir, overall)
         SummaryWriter().write(
@@ -63,6 +68,9 @@ def _finalize_context(ctx: RuntimeContext) -> int:
             ctx,
             measurement_count=measurement_count,
             command_count=command_count,
+        )
+        write_wats_report(
+            ctx.output_dir, ctx, ctx.result_aggregator, verifications, measurements
         )
     ctx.finalized = True
     ctx.final_exit_code = code

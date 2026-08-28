@@ -25,6 +25,16 @@ class PluginRegistry:
         self._loaded = False
 
     def register_config_section(self, spec: ConfigSectionSpec) -> None:
+        """Register one bench TOML section (one dotted path and one ID field).
+
+        Call this once per table type. Duplicate ``dotted_path`` values raise;
+        use ``replace_config_section()`` for an intentional override.
+
+        :param spec: Section contract (one path, one id field, any number of keys).
+        :type spec: ConfigSectionSpec
+
+        :raises PluginRegistrationError: When ``spec.dotted_path`` is already registered.
+        """
         if spec.dotted_path in self._sections:
             raise PluginRegistrationError(
                 f"Config section `{spec.dotted_path}` is already registered. "

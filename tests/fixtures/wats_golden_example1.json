@@ -1,0 +1,125 @@
+{
+    "type": "T",
+    "result": "P",
+    "root": {
+        "id": 1,
+        "group": "M",
+        "stepType": "SequenceCall",
+        "name": "MainSequence Callback",
+        "status": "P",
+        "totTime": 78.78632999999999,
+        "causedUUTFailure": false,
+        "reportText": "Here is a report text",
+        "steps": [
+            {
+                "id": 2,
+                "group": "M",
+                "stepType": "ET_NLT",
+                "name": "Verify bandwidth 1",
+                "status": "P",
+                "tsGuid": "ver_1",
+                "totTime": 0.0,
+                "causedUUTFailure": false,
+                "numericMeas": [
+                    {
+                        "compOp": "GELE",
+                        "status": "P",
+                        "unit": "",
+                        "value": 5.975,
+                        "highLimit": 7.75,
+                        "lowLimit": 4.25
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "group": "M",
+                "stepType": "ET_NLT",
+                "name": "Verify center 1",
+                "status": "P",
+                "tsGuid": "ver_2",
+                "totTime": 0.0,
+                "causedUUTFailure": false,
+                "numericMeas": [
+                    {
+                        "compOp": "GELE",
+                        "status": "P",
+                        "unit": "",
+                        "value": 100,
+                        "highLimit": 101.0,
+                        "lowLimit": 99.0
+                    }
+                ]
+            },
+            {
+                "id": 4,
+                "group": "M",
+                "stepType": "ET_NLT",
+                "name": "Verify bandwidth 2",
+                "status": "P",
+                "tsGuid": "ver_3",
+                "totTime": 0.0,
+                "causedUUTFailure": false,
+                "numericMeas": [
+                    {
+                        "compOp": "GELE",
+                        "status": "P",
+                        "unit": "",
+                        "value": 15.225,
+                        "highLimit": 20.2,
+                        "lowLimit": 14.8
+                    }
+                ]
+            },
+            {
+                "id": 5,
+                "group": "M",
+                "stepType": "ET_NLT",
+                "name": "Verify center 2",
+                "status": "P",
+                "tsGuid": "ver_4",
+                "totTime": 0.0,
+                "causedUUTFailure": false,
+                "numericMeas": [
+                    {
+                        "compOp": "GELE",
+                        "status": "P",
+                        "unit": "",
+                        "value": 105.0,
+                        "highLimit": 104.0,
+                        "lowLimit": 106.0
+                    }
+                ]
+            }
+        ],
+        "seqCall": {
+            "path": "example1",
+            "name": "example1",
+            "version": "0.0"
+        }
+    },
+    "pn": "PARTNUMBER",
+    "rev": "1.2.3",
+    "sn": "123",
+    "processCode": "1234",
+    "location": "TBD",
+    "purpose": "Acceptance",
+    "machineName": "HOSTNAME",
+    "start": "2026-08-07T08:40:48-04:00",
+    "uut": {
+        "user": "USERNAME"
+    },
+    "miscInfos": [
+        {
+            "description": "Colosseum Version:",
+            "text": "TBD",
+            "numeric": 0
+        },
+        {
+            "description": "Test Script File Version:",
+            "text": "TBD",
+            "numeric": 0
+        }
+    ]
+}
+

@@ -28,6 +28,7 @@ def arm_device(*, device_id: int) -> None:
     ctx = get_context()
     if ctx.config is None:
         raise ConfigError("Configuration is not loaded. Call col.config.load_config(...) first.")
+    # dotted path + id field from this plugin's ConfigSectionSpec
     row = ctx.config.require_item("template.device", device_id)
     serial = row["serial"]
     _logger.debug("arm_device device_id=%s serial=%s", device_id, serial)
@@ -67,9 +68,12 @@ def verify_widget_count(
         actual,
     )
     if abs(actual - expected_val) <= tolerance:
-        return VerificationResult(status="PASS", message="", optional=optional)
+        return VerificationResult(
+            status="PASS", message="", optional=optional, actual=actual
+        )
     return VerificationResult(
         status="FAIL",
         message=f"expected {expected_val} +/- {tolerance}, got {actual}",
         optional=optional,
+        actual=actual,
     )

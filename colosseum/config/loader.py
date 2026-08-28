@@ -7,6 +7,7 @@ from typing import Any
 from ..context import RuntimeContext, apply_no_artifacts, get_context, init_context
 from ..logging import get_logger
 from ..plugins.loader import ensure_plugins_loaded
+from .metadata import validate_colosseum_metadata_table
 from .normalize import normalize_sections
 from .sections import ConfigSectionSpec
 from .toml_relaxed import read_relaxed_toml
@@ -26,6 +27,12 @@ class ConfigError(RuntimeError):
 
 @dataclass
 class ConfigStore:
+    """Loaded bench TOML: raw nested dict plus ID-indexed plugin sections.
+
+    Normalized data is ``{dotted_path: {id: row}}``. Each dotted path comes from
+    one ``ConfigSectionSpec`` (one ID field, any number of other keys).
+    """
+
     _raw: dict[str, Any]
     _normalized: dict[str, dict[int, dict[str, Any]]]
     _specs: dict[str, ConfigSectionSpec]
@@ -119,6 +126,11 @@ def apply_raw_config(
         spec.dotted_path: ctx.plugin_registry.validators_for(spec.dotted_path) for spec in specs
     }
     ctx.config_warnings.extend(run_section_validators(normalized, validator_map))
+    colosseum_meta = raw.get("colosseum", {})
+    if isinstance(colosseum_meta, dict):
+        meta_table = colosseum_meta.get("metadata")
+        if isinstance(meta_table, dict):
+            ctx.config_warnings.extend(validate_colosseum_metadata_table(meta_table))
     if ctx.runtime_ready and ctx.logger is not None:
         for warning in ctx.config_warnings:
             ctx.logger.warning(warning)
@@ -132,13 +144,20 @@ def apply_raw_config(
     return store
 
 
-def load_config(path: str | Path, *, no_artifacts: bool = False) -> ConfigStore:
+def load_config(
+    path: str | Path,
+    *,
+    no_artifacts: bool = False,
+    metadata_path: str | Path | None = None,
+) -> ConfigStore:
     """Load and validate a bench TOML file into the active run context.
 
     :param path: Path to the bench configuration file.
     :type path: str | Path
     :param no_artifacts: When ``True``, skip ``outputs/``, ``debug.log``, and on-disk SQLite.
     :type no_artifacts: bool, optional
+    :param metadata_path: Optional WATS metadata YAML loaded after the bench TOML.
+    :type metadata_path: str | Path | None, optional
 
     :returns: Normalized configuration store for plugin sections.
     :rtype: ConfigStore
@@ -157,13 +176,21 @@ def load_config(path: str | Path, *, no_artifacts: bool = False) -> ConfigStore:
         ctx = init_context(
             test_case_name=default_test_name(),
             config_path=config_path,
+            metadata_path=metadata_path,
             no_artifacts=no_artifacts,
             auto_finalize=True,
         )
     else:
         apply_no_artifacts(ctx, no_artifacts=no_artifacts)
+        if metadata_path is not None:
+            ctx.metadata_path = str(Path(metadata_path).resolve())
 
-    return apply_raw_config(ctx, raw, source_label=str(config_path))
+    store = apply_raw_config(ctx, raw, source_label=str(config_path))
+    if metadata_path is not None:
+        from .metadata import load_metadata
+
+        load_metadata(metadata_path)
+    return store
 
 
 def log_loaded_config(ctx: RuntimeContext) -> None:

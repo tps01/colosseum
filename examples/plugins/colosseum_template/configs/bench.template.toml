@@ -1,4 +1,13 @@
 # TODO: Merge this section into your project bench TOML (or use as-is for smoke_test.py).
+#
+# Matches the ConfigSectionSpec in colosseum_template/__init__.py:
+#   dotted path  = template.device   (the [[table]] header)
+#   id field     = device_id         (integer, unique per section)
+#   required     = serial
+#   optional     = label
+#
+# Add another [[template.device]] block for a second device (new device_id).
+# Register a second ConfigSectionSpec to add a different table type.
 
 [[template.device]]
 device_id = 1
