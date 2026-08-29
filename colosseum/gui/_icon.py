@@ -18,22 +18,30 @@ def init_windows_taskbar() -> None:
     try:
         import ctypes
 
-        if hasattr(ctypes.windll, "shcore"):
-            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        windll = getattr(ctypes, "windll", None)
+        if windll is None:
+            return
+        if hasattr(windll, "shcore"):
+            windll.shcore.SetProcessDpiAwareness(2)
         else:
-            ctypes.windll.user32.SetProcessDPIAware()
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(_APP_USER_MODEL_ID)
+            windll.user32.SetProcessDPIAware()
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(_APP_USER_MODEL_ID)
     except (AttributeError, OSError):
         return
 
 
 def _apply_windows_native_icon(window: Any, icon_path: str) -> None:  # noqa: ANN401
     """Set title-bar and taskbar icons via Win32 (sharper than tk iconbitmap on high-DPI)."""
+    if sys.platform != "win32":
+        return
     import ctypes
 
+    windll = getattr(ctypes, "windll", None)
+    if windll is None:
+        return
     hwnd = window.winfo_id()
     try:
-        dpi = ctypes.windll.user32.GetDpiForWindow(hwnd)
+        dpi = windll.user32.GetDpiForWindow(hwnd)
     except (AttributeError, OSError):
         dpi = 96
     scale = max(1, round(dpi / 96))
@@ -43,7 +51,7 @@ def _apply_windows_native_icon(window: Any, icon_path: str) -> None:  # noqa: AN
     icon_small, icon_big = 0, 1
     sizes = ((icon_small, min(64, 16 * scale)), (icon_big, min(256, 32 * scale)))
     for icon_type, size in sizes:
-        handle = ctypes.windll.user32.LoadImageW(
+        handle = windll.user32.LoadImageW(
             None,
             icon_path,
             image_icon,
@@ -52,7 +60,7 @@ def _apply_windows_native_icon(window: Any, icon_path: str) -> None:  # noqa: AN
             load_from_file,
         )
         if handle:
-            ctypes.windll.user32.SendMessageW(hwnd, wm_seticon, icon_type, handle)
+            windll.user32.SendMessageW(hwnd, wm_seticon, icon_type, handle)
 
 
 def apply_window_icon(window: Any) -> None:  # noqa: ANN401
