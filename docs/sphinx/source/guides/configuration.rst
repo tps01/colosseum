@@ -4,17 +4,20 @@ Configuration
 Core reads one bench TOML file. Installed plugins declare the sections they own.
 Core itself does not define instrument or device keys.
 
+The :doc:`writing_test_scripts` walkthrough uses ``[[template.device]]`` rows from the
+``colosseum_template`` plugin. The rules below apply to any plugin section.
+
 Section contract
 ----------------
 
 Each registered section is one ``ConfigSectionSpec``:
 
-* exactly one dotted path (the TOML table, for example ``acme.device``)
+* exactly one dotted path (the TOML table, for example ``template.device``)
 * exactly one integer ID field (the row identity, for example ``device_id``)
 * any number of required keys (including none)
 * any number of optional keys (including none)
 
-A plugin that owns several table types registers several specs — one
+A plugin that owns several table types registers several specs, one
 ``register_config_section`` call per dotted path. The same file can mix sections
 from many plugins.
 
@@ -27,19 +30,19 @@ map at runtime.
 
 Single row::
 
-   [acme.device]
+   [template.device]
    device_id = 1
-   serial = "DUT-001"
+   serial = "TEMPLATE-001"
 
 Several rows::
 
-   [[acme.device]]
+   [[template.device]]
    device_id = 1
-   serial = "DUT-001"
+   serial = "TEMPLATE-001"
 
-   [[acme.device]]
+   [[template.device]]
    device_id = 2
-   serial = "DUT-002"
+   serial = "TEMPLATE-002"
 
 The dotted path is the table header. The ID field must be an integer and unique
 within that section. Missing IDs, non-integer IDs, and duplicate IDs fail the
@@ -58,9 +61,9 @@ normalizes registered sections, then attaches a config store to the run.
 Reading rows
 ------------
 
-* ``col.config.get("acme.device")`` — raw nested table or list (or ``None``).
-* ``store.list_items("acme.device")`` — normalized rows, sorted by ID.
-* ``store.get_item("acme.device", 1)`` / ``store.require_item(...)`` — one row
+* ``col.config.get("template.device")``: raw nested table or list (or ``None``).
+* ``store.list_items("template.device")``: normalized rows, sorted by ID.
+* ``store.get_item("template.device", 1)`` / ``store.require_item(...)``: one row
   by ID. ``require_item`` also checks required keys.
 
 Unregistered tables stay in the raw store (``col.config.get("runtime.label")``)
@@ -93,10 +96,18 @@ warnings.
 
 The same keys may appear in a metadata YAML file (``test_metadata:`` block).
 Load YAML with ``col.config.load_metadata("metadata.yaml")`` or
-``colosseum run my_test.py --metadata metadata.yaml``. YAML overrides the TOML
-table. Finalize writes ``wats_<datetime>_<script>.json`` beside
-``summary.json`` (see :doc:`output_artifacts`). Without metadata, the WATS report
-is still written using runtime defaults (hostname, OS user, empty identity fields).
+``colosseum run my_test.py --metadata metadata.yaml``.
+
+Metadata precedence
+~~~~~~~~~~~~~~~~~~~
+
+1. Values from ``[colosseum.metadata]`` in bench TOML (if present).
+2. YAML ``test_metadata`` overrides TOML when both are loaded.
+3. Runtime defaults (hostname, OS user, empty identity fields) fill any remaining gaps.
+
+Finalize writes ``wats_<datetime>_<script>.json`` beside ``summary.json`` (see
+:doc:`output_artifacts`). Without metadata, the WATS report is still written using
+those defaults.
 
 Optional keys (never required) may enrich the report when set in YAML:
 ``process_name``, ``report_text``, ``seq_version``, ``batch_serial``,
