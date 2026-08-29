@@ -17,6 +17,22 @@ def _get_dotted(raw: dict[str, Any], dotted: str) -> object | None:
 def normalize_sections(
     raw: dict[str, Any], specs: list[ConfigSectionSpec]
 ) -> dict[str, dict[int, dict[str, Any]]]:
+    """Index each registered section by its integer ID field.
+
+    Each spec is one dotted path. A single TOML table or an array of tables
+    both become ``{id: row}``. Missing sections are omitted.
+
+    :param raw: Nested dict from parsed bench TOML.
+    :type raw: dict[str, Any]
+    :param specs: Registered section contracts.
+    :type specs: list[ConfigSectionSpec]
+
+    :returns: ``{dotted_path: {id: row}}`` for sections present in ``raw``.
+    :rtype: dict[str, dict[int, dict[str, Any]]]
+
+    :raises ValueError: When a present section is not a table, an ID is missing,
+        not an ``int``, or duplicated.
+    """
     normalized: dict[str, dict[int, dict[str, Any]]] = {}
     for spec in specs:
         value = _get_dotted(raw, spec.dotted_path)

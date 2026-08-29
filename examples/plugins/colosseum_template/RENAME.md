@@ -8,7 +8,8 @@ Use this when forking `colosseum_template` into your own extension. Work top to 
 | `colosseum-template` | `your-distribution` (e.g. `acme-bench`) | `pyproject.toml` `[project].name` |
 | `template` | `yournamespace` (e.g. `acme`) | Entry-point keys, `register_namespace`, `__colosseum_domain__`, config section prefix, `get_measurement` domain |
 | `colosseum.template` | `colosseum.yournamespace` | `get_logger(...)` in `api.py`, `__init__.py` |
-| `template.device` | `yournamespace.device` | `ConfigSectionSpec`, bench TOML |
+| `template.device` | `yournamespace.device` | `ConfigSectionSpec.dotted_path`, bench TOML table header |
+| `device_id` | `your_id` (e.g. `chamber_id`) | `ConfigSectionSpec.id_field` — exactly one integer identity key per spec |
 | `Colosseum Template Extension` | Your extension title | README |
 
 ## Files to edit
@@ -21,7 +22,7 @@ Use this when forking `colosseum_template` into your own extension. Work top to 
 6. `examples/smoke_test.py` — config path and API calls
 7. This README and `RENAME.md` — update or remove template-specific paths
 
-If you drop Layer 2 (no bench config), remove `register_config_section`, the TOML sample, and config lookups in the API.
+Each `ConfigSectionSpec` has exactly one dotted path, exactly one id field, and any number of required/optional keys. If you drop Layer 2 (no bench config), remove `register_config_section`, the TOML sample, and config lookups in the API.
 
 ## Do not shadow built-in namespaces
 

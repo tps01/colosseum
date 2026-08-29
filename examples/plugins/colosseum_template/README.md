@@ -57,12 +57,33 @@ Edit `colosseum_template/api.py`:
 
 ### 4. Layer 2 — bench config (this template)
 
-This demo registers `template.device` and reads it from `arm_device`. Drop `register_config_section` if your plugin has no TOML.
+This demo registers **one** `ConfigSectionSpec` and reads it from `arm_device`. Each spec is one table type:
+
+| Field | This demo | Rule |
+|-------|-----------|------|
+| `dotted_path` | `template.device` | Exactly one per spec (the `[[table]]` header) |
+| `id_field` | `device_id` | Exactly one per spec (integer, unique in that section) |
+| `required_keys` | `serial` | Any number, including none |
+| `optional_keys` | `label` | Any number, including none |
+
+Call `register_config_section` again to own a second dotted path. Drop it entirely if your plugin has no TOML.
+
+```python
+registry.register_config_section(
+    ConfigSectionSpec(
+        dotted_path="template.device",
+        id_field="device_id",
+        required_keys=("serial",),
+        optional_keys=("label",),
+    )
+)
+```
 
 ```toml
 [[template.device]]
 device_id = 1
 serial = "TEMPLATE-001"
+# label = "optional field"
 ```
 
 ### 5. Layer 3 — optional extras
@@ -133,7 +154,8 @@ Same Python environment as Colosseum and your test scripts.
 
 ### 3. Bench TOML
 
-Add the extension's section(s) if it registers any:
+Add the extension's section(s) if it registers any. One `[[dotted.path]]` (or
+`[dotted.path]`) per table type; each row needs that section's integer id field:
 
 ```toml
 [[template.device]]

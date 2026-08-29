@@ -42,7 +42,10 @@ def build_config_reference_rst(*, output_path: Path) -> Path:
         "Bench configuration reference",
         "=============================",
         "",
-        "Generated from plugin ``ConfigSectionSpec`` registration. Re-run "
+        "Generated from plugin ``ConfigSectionSpec`` registration. Each section "
+        "has exactly one dotted TOML path, exactly one integer ID field, and any "
+        "number of required or optional keys (including none). A plugin that owns "
+        "several table types registers several specs. Re-run "
         "``python scripts/docgen/build_all.py`` after changing required or optional keys.",
         "",
     ]
@@ -61,6 +64,7 @@ def build_config_reference_rst(*, output_path: Path) -> Path:
                 title,
                 "-" * len(title),
                 "",
+                f":Dotted path: ``{spec.dotted_path}``",
                 f":ID field: ``{spec.id_field}``",
                 "",
                 ".. list-table::",

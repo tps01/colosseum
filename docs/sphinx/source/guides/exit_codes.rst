@@ -9,7 +9,9 @@ Colosseum uses a single-bit policy in v1:
    * - Code
      - Meaning
    * - ``0``
-     - All required verifications and commands passed; no suite/setup/teardown failure
+     - All required verifications and commands passed. For suites, all **test** slots
+       passed (setup, ``between_tests``, and teardown outcomes are ignored unless
+       ``rip_cord = true``).
    * - ``1``
      - Otherwise (including a required command ERROR)
 

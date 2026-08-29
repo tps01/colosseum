@@ -10,7 +10,7 @@ version = "0.1.0"
 description = "Colosseum extension template (copy and customize)"
 requires-python = ">=3.9"
 # TODO: Pin a compatible colosseum version range for production releases.
-dependencies = ["colosseum-core>=0.15,<0.16"]
+dependencies = ["colosseum-core>=0.15,<0.17"]
 
 [project.entry-points."colosseum.plugins"]
 # TODO: Replace entry-point key and target module after rename (e.g. acme = "acme_bench:register").

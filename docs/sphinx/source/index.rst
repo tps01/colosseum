@@ -9,6 +9,7 @@ Bench test automation for embedded systems.
 
    guides/installation
    guides/quickstart
+   guides/writing_test_scripts
    guides/configuration
    guides/bench_config_reference
    guides/running_tests

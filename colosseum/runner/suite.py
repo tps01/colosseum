@@ -276,11 +276,13 @@ def _run_script_slot(
 def run_suite(
     suite_path: Path,
     config_path: Path | None = None,
+    metadata_path: Path | None = None,
     *,
     debug: bool = False,
     no_artifacts: bool = False,
 ) -> int:
     from ..config import load_config
+    from ..config.metadata import load_metadata
     from ..context import get_context, init_context
     from ..results.exit_policy import finalize_suite
     from .single_test import ScriptRunError, run_script
@@ -290,12 +292,15 @@ def run_suite(
         test_case_name=suite.name,
         suite_name=suite.name,
         config_path=config_path.resolve() if config_path else None,
+        metadata_path=metadata_path.resolve() if metadata_path else None,
         no_artifacts=no_artifacts,
     )
     ctx = get_context()
     ctx.debug_logging = debug
     if config_path:
-        load_config(config_path)
+        load_config(config_path, metadata_path=metadata_path)
+    elif metadata_path:
+        load_metadata(metadata_path)
 
     ensure_suite_runtime_ready(ctx, suite.name)
     if ctx.logger is not None:

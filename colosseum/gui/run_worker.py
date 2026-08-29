@@ -24,6 +24,7 @@ class RunRequest:
     kind: RunKind
     path: Path
     config_path: str | None
+    metadata_path: str | None
     debug: bool
 
 
@@ -82,6 +83,8 @@ class RunWorker:
             argv.extend(["run-suite", str(request.path)])
         if request.config_path:
             argv.extend(["--config", request.config_path])
+        if request.metadata_path:
+            argv.extend(["--metadata", request.metadata_path])
         if request.debug:
             argv.append("--debug")
         return argv

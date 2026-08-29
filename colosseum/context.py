@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -49,6 +50,9 @@ class RuntimeContext:
     slot_script_path: Path | None = None
     slot_test_index: int | None = None
     slot_repeat_index: int | None = None
+    metadata_yaml: dict[str, Any] = field(default_factory=dict)
+    metadata_path: str | None = None
+    started_at: datetime | None = None
 
 
 def get_context() -> RuntimeContext:
@@ -86,9 +90,12 @@ def init_context(
     test_case_name: str,
     suite_name: str | None = None,
     config_path: Path | str | None = None,
+    metadata_path: Path | str | None = None,
     no_artifacts: bool = False,
     auto_finalize: bool = False,
 ) -> RuntimeContext:
+    from datetime import timezone
+
     from . import __version__
     from .plugins.registry import PluginRegistry
 
@@ -105,6 +112,8 @@ def init_context(
         framework_version=__version__,
         no_artifacts=no_artifacts or _env_no_artifacts(),
         auto_finalize=auto_finalize,
+        metadata_path=str(Path(metadata_path).resolve()) if metadata_path else None,
+        started_at=datetime.now(timezone.utc).astimezone(),
     )
     if auto_finalize:
         from .results.exit_policy import register_auto_finalize_hooks

@@ -18,11 +18,12 @@ def register(registry: PluginRegistry) -> None:
     registry.register_namespace("template", api)
     _logger.debug("Registered col.template namespace")
 
-    # Optional (Layer 2): declare repeatable bench TOML section(s) when you own config.
+    # Optional (Layer 2): one spec = one dotted path, one id field, any number of keys.
+    # Call register_config_section again to own a second table type.
     registry.register_config_section(
         ConfigSectionSpec(
-            "template.device",
-            "device_id",
+            dotted_path="template.device",
+            id_field="device_id",
             required_keys=("serial",),
             optional_keys=("label",),
         )

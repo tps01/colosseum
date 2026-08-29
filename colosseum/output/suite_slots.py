@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ..context import RuntimeContext
@@ -65,6 +66,7 @@ def begin_script_slot(
     ctx.db = DatabaseManager()
     ctx.runtime_ready = False
     ctx.output_dir = None
+    ctx.started_at = datetime.now(timezone.utc).astimezone()
 
     console_level = logging.DEBUG if ctx.debug_logging else logging.INFO
     if ctx.no_artifacts:
@@ -104,11 +106,15 @@ def finalize_script_slot(
 
     measurement_count = 0
     command_count = 0
+    verifications = []
+    measurements = []
     if ctx.db.is_initialized():
         ctx.db.insert_run_metadata("overall_status", overall if affects else "N/A")
         ctx.db.insert_run_metadata("exit_code", str(code))
         measurement_count = ctx.db.count_rows("measurements")
         command_count = ctx.db.count_rows("commands")
+        verifications = ctx.db.fetch_all_verifications()
+        measurements = ctx.db.fetch_all_measurements()
         ctx.db.flush()
 
     if ctx.logger is not None:
@@ -124,6 +130,7 @@ def finalize_script_slot(
     final_dir = ctx.output_dir
     if final_dir is not None and affects:
         final_dir = rename_run_directory_for_result(final_dir, overall)
+        from ..summary.wats import write_wats_report
         from ..summary.writer import SummaryWriter
 
         SummaryWriter().write(
@@ -133,6 +140,7 @@ def finalize_script_slot(
             measurement_count=measurement_count,
             command_count=command_count,
         )
+        write_wats_report(final_dir, ctx, ctx.result_aggregator, verifications, measurements)
 
     result = SuiteSlotResult(
         phase=ctx.phase,

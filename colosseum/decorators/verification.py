@@ -74,6 +74,14 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
     :type expected_val: float
     :param minimum: Stored in SQLite when provided (minimum-style host verifiers).
     :type minimum: float
+    :param maximum: Stored in SQLite when provided (maximum-style host verifiers).
+    :type maximum: float
+    :param exact: Stored in SQLite when provided (equality verifiers).
+    :type exact: float
+    :param compare_op: Explicit WATS comparison operator (for example ``LOG``).
+    :type compare_op: str
+    :param step_name: Human-readable WATS step name (defaults to ``key``).
+    :type step_name: str
 
     :returns: The decorated callable.
     """
@@ -88,6 +96,9 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
             ensure_runtime_ready(ctx)
             key = kwargs.get("key")
             optional = bool(kwargs.get("optional", False))
+            step_name = kwargs.get("step_name")
+            if step_name is not None:
+                step_name = str(step_name).strip() or None
             if not key:
                 result = VerificationResult(
                     status="ERROR", message=f"`{command}` requires `key=`", optional=optional
@@ -105,6 +116,7 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
                         status=result.status,
                         optional=result.optional,
                         message=result.message,
+                        step_name=step_name,
                     )
                 )
                 return result
@@ -134,7 +146,36 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
             ctx.result_aggregator.record_verification(
                 result, key=str(key), command=command, domain=domain
             )
-            expected = kwargs.get("expected_val", kwargs.get("minimum"))
+            if kwargs.get("compare_op") == "LOG":
+                expected = None
+                compare_op: str | None = "LOG"
+                tolerance = None
+            elif "expected_val" in kwargs:
+                expected = kwargs["expected_val"]
+                compare_op = "GELE"
+                tolerance = kwargs.get("tolerance")
+                if tolerance is None:
+                    tolerance = 0.0
+            elif "minimum" in kwargs:
+                expected = kwargs["minimum"]
+                compare_op = "GE"
+                tolerance = None
+            elif "maximum" in kwargs:
+                expected = kwargs["maximum"]
+                compare_op = "LE"
+                tolerance = None
+            elif "exact" in kwargs:
+                expected = kwargs["exact"]
+                compare_op = "EQ"
+                tolerance = None
+            elif "expected" in kwargs:
+                expected = kwargs["expected"]
+                compare_op = "EQ" if isinstance(expected, str) else None
+                tolerance = None
+            else:
+                expected = None
+                compare_op = None
+                tolerance = None
             ctx.db.insert_verification(
                 VerificationRow(
                     domain=domain,
@@ -142,9 +183,12 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
                     key=key,
                     expected=expected,
                     actual=result.actual,
+                    tolerance=tolerance,
+                    compare_op=compare_op,
                     status=result.status,
                     optional=result.optional,
                     message=result.message,
+                    step_name=step_name,
                 )
             )
             if ctx.logger is not None:
