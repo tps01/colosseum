@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..context import RuntimeContext, get_context
+from colosseum.context import RuntimeContext, get_context
+from colosseum.runner.runtime import ensure_runtime_ready
+
+if TYPE_CHECKING:
+    import types
+    from collections.abc import Callable
 
 
 def resolve_domain(func: Callable[..., Any]) -> str:
@@ -24,6 +28,25 @@ def resolve_domain(func: Callable[..., Any]) -> str:
         if domain:
             return str(domain)
     return "core"
+
+
+def stamp_evidence_domain(module: types.ModuleType, name: str) -> None:
+    """Set ``__colosseum_domain__`` on the plugin top-level package when unset."""
+    module_name = getattr(module, "__name__", "") or ""
+    parts = module_name.split(".") if module_name else []
+    for depth in range(len(parts), 0, -1):
+        parent = sys.modules.get(".".join(parts[:depth]))
+        if parent is None:
+            continue
+        if getattr(parent, "__colosseum_domain__", None):
+            return
+    if getattr(module, "__colosseum_domain__", None):
+        return
+    top = parts[0] if parts else ""
+    if top and top in sys.modules:
+        sys.modules[top].__colosseum_domain__ = name  # type: ignore[attr-defined]
+    else:
+        module.__colosseum_domain__ = name  # type: ignore[attr-defined]
 
 
 def command_id_for_module(module: str, name: str) -> str:
@@ -49,4 +72,6 @@ def resolve_command(func: Callable[..., Any]) -> str:
 
 
 def ensure_runtime_context() -> RuntimeContext:
-    return get_context()
+    ctx = get_context()
+    ensure_runtime_ready(ctx)
+    return ctx

@@ -6,7 +6,7 @@ import pytest
 
 from colosseum.config.sections import ConfigSectionSpec
 from colosseum.database import CommandRow, MeasurementRow, VerificationRow
-from colosseum.database.read import is_allowed_table
+from colosseum.database import is_allowed_table
 from colosseum.plugins.registry import PluginRegistry
 from colosseum.results import endex
 
@@ -75,7 +75,6 @@ def test_is_allowed_table_accepts_core_and_plugin_prefix() -> None:
         "verifications",
         "commands",
         "events",
-        "artifacts",
         "run_metadata",
         "plugin_custom",
         "plugin_",
@@ -86,7 +85,7 @@ def test_is_allowed_table_accepts_core_and_plugin_prefix() -> None:
 
 
 def test_write_rows_round_trip_through_typed_reads(unit_runtime_context) -> None:
-    import colosseum.database.read as read_api
+    import colosseum.database as read_api
 
     ctx = unit_runtime_context
     ctx.db.insert_measurement(

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-import types
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..context import get_context
+from colosseum.context import get_context
+
 from .loader import ensure_plugins_loaded
+
+if TYPE_CHECKING:
+    import types
 
 
 class LazyNamespaceProxy:
@@ -24,5 +27,5 @@ class LazyNamespaceProxy:
     def __dir__(self) -> list[str]:
         try:
             return dir(self._module())
-        except Exception:
+        except Exception:  # noqa: BLE001
             return []

@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from .manager import DatabaseManager, initialize_database_if_needed
-from .records import (
+from .manager import (
     CommandRow,
+    DatabaseManager,
     MeasurementRecord,
     MeasurementRow,
     RunMetadataRecord,
     VerificationRecord,
     VerificationRow,
+    initialize_database_if_needed,
+    is_allowed_table,
+    read_measurements,
+    read_run_metadata,
+    read_table,
+    read_verifications,
 )
 
 __all__ = [
@@ -19,13 +25,9 @@ __all__ = [
     "MeasurementRecord",
     "VerificationRecord",
     "RunMetadataRecord",
+    "is_allowed_table",
+    "read_measurements",
+    "read_verifications",
+    "read_run_metadata",
+    "read_table",
 ]
-
-
-# Read API loaded lazily to avoid import cycles with context.
-def __getattr__(name: str) -> object:
-    if name in {"read_measurements", "read_verifications", "read_run_metadata", "read_table"}:
-        from . import read as read_mod
-
-        return getattr(read_mod, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

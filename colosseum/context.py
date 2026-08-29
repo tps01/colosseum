@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -11,6 +10,8 @@ from .database import DatabaseManager
 from .results.aggregation import ResultAggregator
 
 if TYPE_CHECKING:
+    import logging
+
     from .config.loader import ConfigStore
     from .plugins.registry import PluginRegistry
 else:
@@ -58,7 +59,7 @@ class RuntimeContext:
 def get_context() -> RuntimeContext:
     if _ACTIVE_CONTEXT is None:
         raise RuntimeError(
-            "Runtime is not initialized. Call col.config.load_config() or use `colosseum run`."
+            "Runtime is not initialized. Call col.config.load_config() or use `colosseum run`.",
         )
     return _ACTIVE_CONTEXT
 
@@ -80,7 +81,7 @@ def apply_no_artifacts(ctx: RuntimeContext, *, no_artifacts: bool) -> None:
     if ctx.runtime_ready or ctx.output_dir is not None:
         raise RuntimeError(
             "no_artifacts must be set before the runtime is bootstrapped "
-            "(before the first col.* call or colosseum run output allocation)."
+            "(before the first col.* call or colosseum run output allocation).",
         )
     ctx.no_artifacts = True
 

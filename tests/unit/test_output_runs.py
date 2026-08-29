@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from colosseum.config import load_config
-from colosseum.output.runs import (
+from colosseum.runner.runtime import (
     find_output_directories,
     find_run_directory,
     list_run_directory_entries,

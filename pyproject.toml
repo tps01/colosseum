@@ -13,12 +13,13 @@ dependencies = [
   "typing_extensions>=4.0,<5; python_version < '3.10'",
   "customtkinter>=5.2,<6",
   "PyYAML>=6.0,<7",
+  "types-PyYAML>=6.0,<7",
   "pytest>=8.0,<9",
   "sphinx>=7.0,<9",
-  "bandit[toml]>=1.7,<2",
-  "vulture>=2.11,<3",
-  "ruff>=0.8,<1",
-  "mypy>=1.11,<2",
+  "bandit[toml]>=1.7",
+  "vulture>=2.11",
+  "ruff>=0.8",
+  "mypy>=1.11",
 ]
 
 [tool.pytest.ini_options]
@@ -37,6 +38,7 @@ include = ["colosseum", "colosseum.*"]
 
 [tool.setuptools.package-data]
 colosseum = ["py.typed"]
+"colosseum.gui" = ["assets/*"]
 
 [tool.ruff]
 target-version = "py39"
@@ -44,7 +46,12 @@ line-length = 100
 src = ["colosseum", "scripts"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "ANN", "ARG", "SIM", "RET", "PTH"]
+select = ["A", "BLE", "FBT", "N", "COM", "C4", "ISC", "ICN", "TID", "TCH", "E", "F", "W", "I", "B", "UP", "ANN", "ARG", "SIM", "RET", "PTH"]
+
+[tool.ruff.lint.per-file-ignores]
+"colosseum/logging/__init__.py" = ["A005"]
+"colosseum/gui/app.py" = ["E501", "FBT003", "ANN401"]
+"colosseum/gui/_icon.py" = ["FBT003"]
 
 [tool.mypy]
 python_version = "3.12"

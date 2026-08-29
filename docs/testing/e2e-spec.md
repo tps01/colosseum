@@ -1,13 +1,16 @@
 # Colosseum core E2E specification
 
-Black-box behavioral requirements for the Colosseum test framework. Each requirement
+Black-box behavioral requirements for the Colosseum test framework. Each
+requirement
 maps to a subprocess test under `tests/e2e/` and can be used for test-driven
 reimplementation without reading source.
 
-Tests use the built-in `core` evidence domain via `tests/support/core_api.py`. No
+Tests use the built-in `core` evidence domain via `tests/support/core_api.py`.
+No
 plugins are installed.
 
-Integration tests under `tests/integration/` mirror many suite behaviors in-process
+Integration tests under `tests/integration/` mirror many suite behaviors
+in-process
 for faster feedback; this document is the user-facing CLI contract.
 
 ## Single run (`colosseum run`)
@@ -24,7 +27,8 @@ for faster feedback; this document is the user-facing CLI contract.
 - `run_metadata` records `overall_status=PASS` and `exit_code=0`.
 - Stdout includes `Colosseum version:` and `Overall result: PASS`.
 
-**Fixtures:** `tests/fixtures/scripts/optional_fail_test.py`, `tests/fixtures/core.toml`
+**Fixtures:** `tests/fixtures/scripts/optional_fail_test.py`,
+`tests/fixtures/core.toml`
 
 **Test:** `test_run_cli.py::test_pass_run_writes_full_artifacts`
 
@@ -103,7 +107,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 **Acceptance criteria:**
 
-- WATS JSON contains `pn`, `rev`, `sn`, `processCode`, `location`, `purpose` from metadata.
+- WATS JSON contains `pn`, `rev`, `sn`, `processCode`, `location`, `purpose`
+  from metadata.
 
 **Fixtures:** `wats_smoke_test.py`, `metadata_example.yaml`
 
@@ -111,7 +116,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-RUN-08
 
-**Behavior:** During execution the output directory has no result suffix; after finalize it is renamed with `-pass` or `-fail`.
+**Behavior:** During execution the output directory has no result suffix; after
+finalize it is renamed with `-pass` or `-fail`.
 
 **Acceptance criteria:**
 
@@ -126,7 +132,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-DIR-01
 
-**Behavior:** `python script.py` with `load_config` and `col.endex()` matches the CLI artifact contract.
+**Behavior:** `python script.py` with `load_config` and `col.endex()` matches
+the CLI artifact contract.
 
 **Acceptance criteria:**
 
@@ -139,11 +146,13 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-DIR-02
 
-**Behavior:** CLI invokes `main()` only; the runner finalizes even when `col.endex()` is not called from the script.
+**Behavior:** CLI invokes `main()` only; the runner finalizes even when
+`col.endex()` is not called from the script.
 
 **Acceptance criteria:**
 
-- Script without `endex()` in code path still produces finalized artifacts when run via CLI.
+- Script without `endex()` in code path still produces finalized artifacts when
+  run via CLI.
 - Exit code reflects verification outcomes.
 
 **Fixtures:** `cli_no_endex_test.py`
@@ -154,7 +163,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-SUITE-01
 
-**Behavior:** Happy suite runs setup, test, and teardown slots; container passes.
+**Behavior:** Happy suite runs setup, test, and teardown slots; container
+passes.
 
 **Acceptance criteria:**
 
@@ -169,12 +179,14 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-SUITE-02
 
-**Behavior:** Test slots get full artifacts; supporting slots get log and sqlite only.
+**Behavior:** Test slots get full artifacts; supporting slots get log and sqlite
+only.
 
 **Acceptance criteria:**
 
 - Test slot: `summary.txt`, `summary.json`, WATS JSON present.
-- Setup/teardown slot: `debug.log` and `execution.sqlite` only; no `summary.txt` or WATS.
+- Setup/teardown slot: `debug.log` and `execution.sqlite` only; no `summary.txt`
+  or WATS.
 
 **Fixtures:** `suites/happy.toml`
 
@@ -236,7 +248,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-SUITE-07
 
-**Behavior:** `rip_cord=true` aborts on setup failure, runs teardown, fails suite.
+**Behavior:** `rip_cord=true` aborts on setup failure, runs teardown, fails
+suite.
 
 **Acceptance criteria:**
 
@@ -250,7 +263,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-SUITE-08
 
-**Behavior:** `between_tests` runs between test slots, not before the first or after the last.
+**Behavior:** `between_tests` runs between test slots, not before the first or
+after the last.
 
 **Acceptance criteria:**
 
@@ -262,7 +276,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-SUITE-09
 
-**Behavior:** `repeat_count` runs N iterations; `between_tests` runs between iterations.
+**Behavior:** `repeat_count` runs N iterations; `between_tests` runs between
+iterations.
 
 **Acceptance criteria:**
 
@@ -275,7 +290,8 @@ for faster feedback; this document is the user-facing CLI contract.
 
 ### E2E-SUITE-10
 
-**Behavior:** Suite `--metadata` propagates identity fields to test-slot WATS files.
+**Behavior:** Suite `--metadata` propagates identity fields to test-slot WATS
+files.
 
 **Acceptance criteria:**
 

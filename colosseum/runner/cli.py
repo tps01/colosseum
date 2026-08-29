@@ -4,10 +4,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from ..config import ConfigError, load_config
-from ..context import init_context
-from ..output import ensure_runtime_ready
-from ..results.exit_policy import endex
+from colosseum.config import ConfigError, load_config
+from colosseum.context import init_context
+from colosseum.results.exit_policy import endex
+from colosseum.runner.runtime import ensure_runtime_ready
+
 from .single_test import ScriptRunError, run_script
 from .suite import SuiteError, run_suite
 
@@ -106,7 +107,7 @@ def _load_run_config(config_path: str | None, metadata_path: str | None = None) 
     if config_path:
         load_config(config_path, metadata_path=metadata_path)
     elif metadata_path:
-        from ..config.metadata import load_metadata
+        from colosseum.config.metadata import load_metadata
 
         load_metadata(metadata_path)
 
@@ -115,8 +116,8 @@ def _run_single_test(
     test_path: Path,
     config_path: str | None,
     metadata_path: str | None,
-    debug: bool,
     *,
+    debug: bool = False,
     no_artifacts: bool = False,
 ) -> None:
     ctx = init_context(
@@ -141,7 +142,7 @@ def run_cli(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.gui:
-        from ..gui.app import main as gui_main
+        from colosseum.gui.app import main as gui_main
 
         gui_main()
         return 0
@@ -163,7 +164,7 @@ def run_cli(argv: list[str] | None = None) -> int:
                 test_path,
                 args.config_path,
                 getattr(args, "metadata_path", None),
-                bool(args.debug),
+                debug=bool(args.debug),
                 no_artifacts=bool(getattr(args, "no_artifacts", False)),
             )
         except ConfigError:

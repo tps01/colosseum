@@ -8,7 +8,7 @@ from typing import Union
 from colosseum.database.manager import DatabaseManager
 
 UNIT_TEST_DB_URI = "file:colosseum_unit_tests?mode=memory&cache=shared"
-_UNIT_DB_TABLES = ("measurements", "verifications", "events", "artifacts", "run_metadata")
+_UNIT_DB_TABLES = ("measurements", "verifications", "commands", "events", "run_metadata")
 
 
 def connect_unit_test_db(manager: DatabaseManager, uri: str = UNIT_TEST_DB_URI) -> None:

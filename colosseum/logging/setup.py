@@ -4,8 +4,10 @@ import logging
 import platform
 import sys
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
-from ..context import RuntimeContext
+if TYPE_CHECKING:
+    from colosseum.context import RuntimeContext
 
 
 def setup_logging(
@@ -50,6 +52,13 @@ def setup_logging(
     for line in header:
         logger.info(line)
     return logger
+
+
+def close_logger_handlers(logger: logging.Logger) -> None:
+    for handler in list(logger.handlers):
+        handler.flush()
+        handler.close()
+    logger.handlers.clear()
 
 
 def get_logger(name: str) -> logging.Logger:

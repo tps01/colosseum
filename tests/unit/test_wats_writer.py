@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from colosseum.database.records import MeasurementRecord, VerificationRecord
+from colosseum.database.manager import MeasurementRecord, VerificationRecord
 from colosseum.results.aggregation import ResultAggregator
 from colosseum.summary.wats import build_wats_report, write_wats_report
 

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import runpy
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ..context import get_context
+from colosseum.context import get_context
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class ScriptRunError(RuntimeError):
