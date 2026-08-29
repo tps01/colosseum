@@ -50,7 +50,7 @@ class ResultAggregator:
                 "key": key,
                 "command": command,
                 "domain": domain,
-            }
+            },
         )
 
     def record_verification(
@@ -96,7 +96,7 @@ class ResultAggregator:
                 "key": "",
                 "command": "suite",
                 "domain": "runner",
-            }
+            },
         )
 
     def mark_teardown_failed(self) -> None:

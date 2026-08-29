@@ -8,7 +8,6 @@ import pytest
 
 from colosseum.runner.suite import (
     SuiteError,
-    expand_test_schedule,
     load_suite_toml,
     parse_repeat_duration,
 )
@@ -148,16 +147,3 @@ def test_invalid_repeat_for_duration(tmp_path, fixtures_dir) -> None:
 def test_parse_repeat_duration(value: str, expected_seconds: int) -> None:
     assert parse_repeat_duration(value).total_seconds() == expected_seconds
 
-
-def test_expand_test_schedule_count_mode(fixtures_dir) -> None:
-    suite = load_suite_toml(fixtures_dir / "suites" / "repeat_count.toml")
-    schedule = expand_test_schedule(suite.tests)
-    assert len(schedule) == 3
-    assert [run.repeat_index for run in schedule] == [0, 1, 2]
-    assert all(run.path.name == "count_repeat.py" for run in schedule)
-
-
-def test_expand_test_schedule_rejects_duration_mode(fixtures_dir) -> None:
-    suite = load_suite_toml(fixtures_dir / "suites" / "repeat_for.toml")
-    with pytest.raises(SuiteError, match="does not support repeat_for"):
-        expand_test_schedule(suite.tests)

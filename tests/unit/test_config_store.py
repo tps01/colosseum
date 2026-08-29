@@ -8,7 +8,7 @@ import colosseum as col
 from colosseum.config.loader import ConfigError, ConfigStore, load_config
 from colosseum.config.sections import ConfigSectionSpec
 from colosseum.context import init_context, get_context
-from colosseum.output import ensure_output_dir
+from colosseum.runner.runtime import ensure_output_dir
 
 
 SPEC = ConfigSectionSpec(

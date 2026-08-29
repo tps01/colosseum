@@ -195,7 +195,7 @@ Document matching rows for end users. Integer fields such as ``device_id`` and
    serial = "TEMPLATE-001"
    # label = "optional field"
 
-Unknown keys produce warnings. Missing required keys raise when the row is loaded
+Unknown keys in plugin config sections are ignored at runtime. Missing required keys raise when the row is loaded
 with ``require_item``. Registered section keys appear in the generated bench
 configuration reference when the plugin is installed during a core docs build.
 
@@ -204,10 +204,9 @@ Layer 3: Resources and extras
 
 Optional registry hooks:
 
-* ``registry.register_config_validator(dotted_path, fn)``: return warning strings.
 * ``registry.register_shutdown(callable)``: cleanup on ``col.endex()`` (LIFO order).
 
-Connection helpers (config lookup, ``resource_cache``) are ordinary module functions,
+Connection helpers (config lookup, cached resources on ``ctx.resource_cache``) are ordinary module functions,
 not a framework decorator. Network and hardware I/O use ordinary Python libraries
 (for example ``socket`` for UDP). The template demo reads config inline; first-party
 plugins such as messaging and equipment show cached-resource patterns.

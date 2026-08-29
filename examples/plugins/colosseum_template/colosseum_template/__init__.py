@@ -29,5 +29,4 @@ def register(registry: PluginRegistry) -> None:
         )
     )
 
-    # Optional (Layer 3): registry.register_config_validator("template.device", fn)
     # Optional (Layer 3): registry.register_shutdown(close_all)

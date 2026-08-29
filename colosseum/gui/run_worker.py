@@ -10,8 +10,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Any
 
-from ..output.runs import find_run_directory
-from ..runner.suite import load_suite_toml
+from colosseum.runner.runtime import find_run_directory
+from colosseum.runner.suite import load_suite_toml
 
 
 class RunKind(Enum):

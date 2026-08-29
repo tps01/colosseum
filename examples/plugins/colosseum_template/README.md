@@ -1,19 +1,23 @@
 # colosseum_template
 
-Copy-ready stub for a **third-party Colosseum extension**. Fork this directory, follow [RENAME.md](RENAME.md), and implement your API under your own namespace (default demo: `template` → `col.template.*`).
+Copy-ready stub for a **third-party Colosseum extension**. Fork this directory,
+follow [RENAME.md](RENAME.md), and implement your API under your own namespace
+(default demo: `template` → `col.template.*`).
 
-Official guide (layered MVP → extras): [`docs/sphinx/source/guides/plugins.rst`](../../../docs/sphinx/source/guides/plugins.rst).
+Official guide (layered MVP → extras):
+[`docs/sphinx/source/guides/plugins.rst`](../../../docs/sphinx/source/guides/plugins.rst).
 
 A plugin needs **three** things to work. Everything else is optional.
 
 | Layer | What | Required? |
-|-------|------|-----------|
+| --- | --- | --- |
 | 0 | Entry point + `register_namespace` + API module | **Yes** |
 | 1 | `@command` / `@measurement` / `@verification` | When you need evidence |
 | 2 | `ConfigSectionSpec` + bench TOML | When you own config rows |
 | 3 | Validators, shutdown, connection helpers | When you need them |
 
-This template is a Layer 1–2 demo (evidence + one config section). For Layer 0 only, see first-party `colosseum-shared`.
+This template is a Layer 1–2 demo (evidence + one config section). For Layer 0
+only, see first-party `colosseum-shared`.
 
 ---
 
@@ -21,7 +25,8 @@ This template is a Layer 1–2 demo (evidence + one config section). For Layer 0
 
 ### 1. Copy and rename
 
-Copy `examples/plugins/colosseum_template/` elsewhere. Work through [RENAME.md](RENAME.md).
+Copy `examples/plugins/colosseum_template/` elsewhere. Work through
+[RENAME.md](RENAME.md).
 
 ### 2. Layer 0 — wire discovery
 
@@ -32,7 +37,8 @@ Copy `examples/plugins/colosseum_template/` elsewhere. Work through [RENAME.md](
 template = "colosseum_template:register"
 ```
 
-The entry-point **key** is metadata; the runtime namespace is the string passed to `register_namespace`.
+The entry-point **key** is metadata; the runtime namespace is the string passed
+to `register_namespace`.
 
 **`colosseum_template/__init__.py`:**
 
@@ -42,31 +48,36 @@ def register(registry):
     registry.register_namespace("template", api)  # → col.template.*
 ```
 
-`register_namespace` also sets the evidence domain to `"template"` unless the package already defines `__colosseum_domain__`.
+`register_namespace` also sets the evidence domain to `"template"` unless the
+package already defines `__colosseum_domain__`.
 
-Keep heavy imports inside `register()` so importing the package stays lightweight.
+Keep heavy imports inside `register()` so importing the package stays
+lightweight.
 
 ### 3. Layer 1 — implement the API (this template)
 
 Edit `colosseum_template/api.py`:
 
 - `@command` / `@measurement` / `@verification` from `colosseum.decorators`.
-- Look up prior measurements with `get_context().db.get_measurement(...)` (domain matches namespace after rename).
+- Look up prior measurements with `get_context().db.get_measurement(...)`
+  (domain matches namespace after rename).
 - Log with `get_logger("colosseum.template")` so lines appear in `debug.log`.
 - Scripts: one keyword-arg `col.*` call per line.
 
 ### 4. Layer 2 — bench config (this template)
 
-This demo registers **one** `ConfigSectionSpec` and reads it from `arm_device`. Each spec is one table type:
+This demo registers **one** `ConfigSectionSpec` and reads it from `arm_device`.
+Each spec is one table type:
 
 | Field | This demo | Rule |
-|-------|-----------|------|
-| `dotted_path` | `template.device` | Exactly one per spec (the `[[table]]` header) |
-| `id_field` | `device_id` | Exactly one per spec (integer, unique in that section) |
+| --- | --- | --- |
+| `dotted_path` | `template.device` | Exactly o... |
+| `id_field` | `device_id` | Exactly o... |
 | `required_keys` | `serial` | Any number, including none |
 | `optional_keys` | `label` | Any number, including none |
 
-Call `register_config_section` again to own a second dotted path. Drop it entirely if your plugin has no TOML.
+Call `register_config_section` again to own a second dotted path. Drop it
+entirely if your plugin has no TOML.
 
 ```python
 registry.register_config_section(
@@ -92,7 +103,8 @@ Add only when needed:
 
 - `registry.register_config_validator(...)` — warning strings for a section.
 - `registry.register_shutdown(...)` — release resources on `col.endex()`.
-- Connection / cache helpers as ordinary module functions (see messaging/equipment).
+- Connection / cache helpers as ordinary module functions (see
+  messaging/equipment).
 
 ### Logging
 
@@ -102,7 +114,8 @@ from colosseum.logging import get_logger
 _logger = get_logger("colosseum.template")
 ```
 
-Rename to `colosseum.<yournamespace>` when forking. Names like `template` or `colosseum_template` never reach `debug.log`.
+Rename to `colosseum.<yournamespace>` when forking. Names like `template` or
+`colosseum_template` never reach `debug.log`.
 
 ### 6. Install locally (editable)
 
@@ -110,7 +123,8 @@ Rename to `colosseum.<yournamespace>` when forking. Names like `template` or `co
 pip install -e .
 ```
 
-Entry points require install metadata. You also need `colosseum-core` in the same environment.
+Entry points require install metadata. You also need `colosseum-core` in the
+same environment.
 
 ### 7. Verify
 
@@ -126,11 +140,13 @@ colosseum run examples/smoke_test.py --config configs/bench.template.toml
 
 ### 8. Optional tests
 
-This stub does not ship tests. Patterns: Colosseum `tests/unit/` (`unit_runtime_context`) and `tests/integration/test_plugin_registry_load.py`.
+This stub does not ship tests. Patterns: Colosseum `tests/unit/`
+(`unit_runtime_context`) and `tests/integration/test_plugin_registry_load.py`.
 
 ### 9. Publishing
 
-Build with `python -m build`. Do not register a reserved or already-owned namespace (`equipment`, `shared`, `io`, `host`, `messaging`).
+Build with `python -m build`. Do not register a reserved or already-owned
+namespace (`equipment`, `shared`, `io`, `host`, `messaging`).
 
 ---
 
@@ -176,7 +192,8 @@ col.endex()
 ```
 
 - **`col.endex()`** — flush logs/DB, write summaries, exit `0`/`1`.
-- **Utility scripts** — `load_config(..., no_artifacts=True)` or CLI `--no-artifacts`.
+- **Utility scripts** — `load_config(..., no_artifacts=True)` or CLI
+  `--no-artifacts`.
 
 ### 5. Use via CLI
 
@@ -186,24 +203,26 @@ colosseum run my_test.py --config bench.toml
 
 ### 6. Evidence
 
-Normal runs create `debug.log`, `execution.sqlite`, `summary.txt`, and `summary.json` under `outputs/`. Use `--no-artifacts` when you do not need persisted evidence.
+Normal runs create `debug.log`, `execution.sqlite`, `summary.txt`, and
+`summary.json` under `outputs/`. Use `--no-artifacts` when you do not need
+persisted evidence.
 
 ### 7. Troubleshooting
 
 | Symptom | Likely cause |
-|---------|----------------|
+| --- | --- |
 | `Namespace '…' is not registered` | Extension not installed in this env |
-| `Failed to load plugin entry point` | Exception inside `register()` — see traceback |
+| `Failed to load plugin entry point` | Exception... |
 | `Configuration is not loaded` | Call `col.config.load_config(path)` first |
-| Missing required keys | Bench TOML row incomplete for your `ConfigSectionSpec` |
-| `Config section … is already registered` | Two plugins claim the same section |
+| Missing required keys | Bench TOM... |
+| `Config s... | Two plugins claim the same section |
 | `AttributeError` on `col.yournamespace` | Typo in namespace or registration |
 
 ---
 
 ## Layout
 
-```
+```text
 colosseum_template/
   pyproject.toml
   README.md

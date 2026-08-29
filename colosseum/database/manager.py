@@ -2,22 +2,80 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-from .records import (
-    CommandRow,
-    MeasurementRecord,
-    MeasurementRow,
-    RunMetadataRecord,
-    VerificationRecord,
-    VerificationRow,
-)
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..context import RuntimeContext
+    from colosseum.context import RuntimeContext
 from .schema import SCHEMA_SQL
+
+
+@dataclass
+class MeasurementRow:
+    """Measurement write/read row. ``id`` is set when loaded from SQLite."""
+
+    domain: str
+    command: str
+    key: str
+    row_index: int = 0
+    value: Any = None
+    units: str | None = None
+    artifact_path: str | None = None
+    status: str = "PASS"
+    timestamp: str = ""
+    id: int | None = None
+
+
+@dataclass
+class VerificationRow:
+    """Verification write/read row. ``id`` is set when loaded from SQLite."""
+
+    domain: str
+    command: str
+    key: str
+    expected: Any = None
+    actual: Any = None
+    tolerance: float | None = None
+    compare_op: str | None = None
+    status: str = "PASS"
+    optional: bool = False
+    message: str | None = ""
+    step_name: str | None = None
+    timestamp: str = ""
+    id: int | None = None
+
+
+@dataclass
+class CommandRow:
+    domain: str
+    command: str
+    key: str = ""
+    result: Any = None
+    status: str = "PASS"
+    optional: bool = False
+    message: str = ""
+    timestamp: str = ""
+    id: int | None = None
+
+
+@dataclass
+class RunMetadataRecord:
+    key: str
+    value: str
+
+
+MeasurementRecord = MeasurementRow
+VerificationRecord = VerificationRow
+
+_ALLOWED_TABLES = frozenset(
+    {"measurements", "verifications", "commands", "events", "run_metadata"},
+)
+
+
+def is_allowed_table(name: str) -> bool:
+    return name in _ALLOWED_TABLES or name.startswith("plugin_")
 
 
 def _utc_now() -> str:
@@ -29,6 +87,119 @@ def _cursor_rowid(cur: sqlite3.Cursor) -> int:
     if rowid is None:
         raise RuntimeError("INSERT did not return a row id")
     return int(rowid)
+
+
+def _loads_json(value: object) -> object | None:
+    if value is None:
+        return None
+    if isinstance(value, (str, bytes, bytearray)):
+        loaded: object = json.loads(value)
+        return loaded
+    raise TypeError(f"unexpected JSON column value: {type(value)!r}")
+
+
+def _as_optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        raise TypeError("bool is not a numeric tolerance")
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        return float(value)
+    raise TypeError(f"expected numeric tolerance, got {type(value)!r}")
+
+
+def _as_int(value: object) -> int:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return int(value)
+    raise TypeError(f"expected integer column value, got {type(value)!r}")
+
+
+def _measurement_from_lookup(item: tuple[object, ...]) -> MeasurementRow:
+    return MeasurementRow(
+        domain=str(item[0]),
+        command=str(item[1]),
+        key=str(item[2]),
+        row_index=_as_int(item[3]),
+        value=_loads_json(item[4]),
+        units=item[5],  # type: ignore[arg-type]
+        artifact_path=item[6],  # type: ignore[arg-type]
+        status=str(item[7]),
+        timestamp=str(item[8]),
+        id=_as_int(item[9]) if item[9] is not None else None,
+    )
+
+
+def _measurement_record(item: tuple[object, ...]) -> MeasurementRecord:
+    return MeasurementRecord(
+        id=_as_int(item[0]),
+        domain=str(item[1]),
+        command=str(item[2]),
+        key=str(item[3]),
+        row_index=_as_int(item[4]),
+        value=_loads_json(item[5]),
+        units=item[6],  # type: ignore[arg-type]
+        artifact_path=item[7],  # type: ignore[arg-type]
+        status=str(item[8]),
+        timestamp=str(item[9]),
+    )
+
+
+def _verification_record(item: tuple[object, ...]) -> VerificationRecord:
+    return VerificationRecord(
+        id=_as_int(item[0]),
+        domain=str(item[1]),
+        command=str(item[2]),
+        key=str(item[3]),
+        expected=_loads_json(item[4]),
+        actual=_loads_json(item[5]),
+        tolerance=_as_optional_float(_loads_json(item[6])),
+        compare_op=item[7],  # type: ignore[arg-type]
+        status=str(item[8]),
+        optional=bool(item[9]),
+        message=item[10],  # type: ignore[arg-type]
+        step_name=item[11],  # type: ignore[arg-type]
+        timestamp=str(item[12]),
+    )
+
+
+def _active_ctx() -> RuntimeContext:
+    from colosseum.context import get_context
+
+    return get_context()
+
+
+def read_measurements() -> list[MeasurementRecord]:
+    ctx = _active_ctx()
+    if not ctx.db.is_initialized():
+        raise RuntimeError("Database is not initialized for this run")
+    return ctx.db.fetch_all_measurements()
+
+
+def read_verifications() -> list[VerificationRecord]:
+    ctx = _active_ctx()
+    if not ctx.db.is_initialized():
+        raise RuntimeError("Database is not initialized for this run")
+    return ctx.db.fetch_all_verifications()
+
+
+def read_run_metadata() -> list[RunMetadataRecord]:
+    ctx = _active_ctx()
+    if not ctx.db.is_initialized():
+        raise RuntimeError("Database is not initialized for this run")
+    return ctx.db.fetch_run_metadata()
+
+
+def read_table(name: str) -> list[dict[str, object]]:
+    ctx = _active_ctx()
+    if not ctx.db.is_initialized():
+        raise RuntimeError("Database is not initialized for this run")
+    if is_allowed_table(name):
+        return ctx.db.fetch_table_rows(name)
+    raise ValueError(f"Unknown or disallowed table: {name}")
 
 
 class DatabaseManager:
@@ -81,10 +252,14 @@ class DatabaseManager:
             raise RuntimeError("Database not initialized")
         return self._conn
 
+    def _execute_insert(self, sql: str, params: tuple[object, ...]) -> int:
+        cur = self._require_conn().execute(sql, params)
+        self._maybe_commit()
+        return _cursor_rowid(cur)
+
     def insert_measurement(self, row: MeasurementRow) -> int:
-        conn = self._require_conn()
         ts = row.timestamp or _utc_now()
-        cur = conn.execute(
+        return self._execute_insert(
             """
             INSERT INTO measurements
             (domain, command, key, row_index, value_json, units, artifact_path, status, timestamp)
@@ -102,13 +277,10 @@ class DatabaseManager:
                 ts,
             ),
         )
-        self._maybe_commit()
-        return _cursor_rowid(cur)
 
     def insert_command(self, row: CommandRow) -> int:
-        conn = self._require_conn()
         ts = row.timestamp or _utc_now()
-        cur = conn.execute(
+        return self._execute_insert(
             """
             INSERT INTO commands
             (domain, command, key, result_json, status, optional, message, timestamp)
@@ -125,13 +297,10 @@ class DatabaseManager:
                 ts,
             ),
         )
-        self._maybe_commit()
-        return _cursor_rowid(cur)
 
     def insert_verification(self, row: VerificationRow) -> int:
-        conn = self._require_conn()
         ts = row.timestamp or _utc_now()
-        cur = conn.execute(
+        return self._execute_insert(
             """
             INSERT INTO verifications
             (domain, command, key, expected_json, actual_json, tolerance_json, compare_op,
@@ -153,34 +322,21 @@ class DatabaseManager:
                 ts,
             ),
         )
-        self._maybe_commit()
-        return _cursor_rowid(cur)
 
     def insert_event(self, level: str, source: str, message: str) -> int:
-        conn = self._require_conn()
-        cur = conn.execute(
+        return self._execute_insert(
             "INSERT INTO events(level, source, message, timestamp) VALUES (?, ?, ?, ?)",
             (level, source, message, _utc_now()),
         )
-        self._maybe_commit()
-        return _cursor_rowid(cur)
 
     def insert_run_metadata(self, key: str, value: str) -> None:
-        conn = self._require_conn()
-        conn.execute("INSERT OR REPLACE INTO run_metadata(key, value) VALUES (?, ?)", (key, value))
-        self._maybe_commit()
-
-    def insert_artifact(self, kind: str, path: str, description: str = "") -> int:
-        conn = self._require_conn()
-        cur = conn.execute(
-            "INSERT INTO artifacts(kind, path, description, timestamp) VALUES (?, ?, ?, ?)",
-            (kind, path, description, _utc_now()),
+        self._execute_insert(
+            "INSERT OR REPLACE INTO run_metadata(key, value) VALUES (?, ?)",
+            (key, value),
         )
-        self._maybe_commit()
-        return _cursor_rowid(cur)
 
     def get_measurement(
-        self, domain: str, command: str, key: str, row_index: int = 0
+        self, domain: str, command: str, key: str, row_index: int = 0,
     ) -> MeasurementRow | None:
         conn = self._require_conn()
         cur = conn.execute(
@@ -195,18 +351,7 @@ class DatabaseManager:
         item = cur.fetchone()
         if item is None:
             return None
-        return MeasurementRow(
-            domain=item[0],
-            command=item[1],
-            key=item[2],
-            row_index=item[3],
-            value=json.loads(item[4]) if item[4] is not None else None,
-            units=item[5],
-            artifact_path=item[6],
-            status=item[7],
-            timestamp=item[8],
-            id=item[9],
-        )
+        return _measurement_from_lookup(item)
 
     def list_measurements(self, domain: str, command: str, key: str) -> list[MeasurementRow]:
         conn = self._require_conn()
@@ -218,23 +363,7 @@ class DatabaseManager:
             """,
             (domain, command, key),
         )
-        out: list[MeasurementRow] = []
-        for item in cur.fetchall():
-            out.append(
-                MeasurementRow(
-                    domain=item[0],
-                    command=item[1],
-                    key=item[2],
-                    row_index=item[3],
-                    value=json.loads(item[4]) if item[4] is not None else None,
-                    units=item[5],
-                    artifact_path=item[6],
-                    status=item[7],
-                    timestamp=item[8],
-                    id=item[9],
-                )
-            )
-        return out
+        return [_measurement_from_lookup(item) for item in cur.fetchall()]
 
     def fetch_all_measurements(self) -> list[MeasurementRecord]:
         conn = self._require_conn()
@@ -243,25 +372,9 @@ class DatabaseManager:
             SELECT id, domain, command, key, row_index, value_json, units,
                    artifact_path, status, timestamp
             FROM measurements ORDER BY id ASC
-            """
+            """,
         )
-        rows: list[MeasurementRecord] = []
-        for item in cur.fetchall():
-            rows.append(
-                MeasurementRecord(
-                    id=item[0],
-                    domain=item[1],
-                    command=item[2],
-                    key=item[3],
-                    row_index=item[4],
-                    value=json.loads(item[5]) if item[5] is not None else None,
-                    units=item[6],
-                    artifact_path=item[7],
-                    status=item[8],
-                    timestamp=item[9],
-                )
-            )
-        return rows
+        return [_measurement_record(item) for item in cur.fetchall()]
 
     def fetch_all_verifications(self) -> list[VerificationRecord]:
         conn = self._require_conn()
@@ -270,29 +383,9 @@ class DatabaseManager:
             SELECT id, domain, command, key, expected_json, actual_json, tolerance_json,
                    compare_op, status, optional, message, step_name, timestamp
             FROM verifications ORDER BY id ASC
-            """
+            """,
         )
-        rows: list[VerificationRecord] = []
-        for item in cur.fetchall():
-            tolerance = json.loads(item[6]) if item[6] is not None else None
-            rows.append(
-                VerificationRecord(
-                    id=item[0],
-                    domain=item[1],
-                    command=item[2],
-                    key=item[3],
-                    expected=json.loads(item[4]) if item[4] is not None else None,
-                    actual=json.loads(item[5]) if item[5] is not None else None,
-                    tolerance=tolerance,
-                    compare_op=item[7],
-                    status=item[8],
-                    optional=bool(item[9]),
-                    message=item[10],
-                    step_name=item[11],
-                    timestamp=item[12],
-                )
-            )
-        return rows
+        return [_verification_record(item) for item in cur.fetchall()]
 
     def fetch_run_metadata(self) -> list[RunMetadataRecord]:
         conn = self._require_conn()
@@ -310,7 +403,7 @@ class DatabaseManager:
         return [dict(zip(columns, row)) for row in cur.fetchall()]
 
     def count_rows(
-        self, table: str, where: str = "", params: tuple[object, ...] = ()
+        self, table: str, where: str = "", params: tuple[object, ...] = (),
     ) -> int:
         import re
 

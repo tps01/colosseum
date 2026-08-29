@@ -18,5 +18,6 @@ registrations (one dotted path and one ID field per section, any number of
 keys), and invokes Sphinx. A core-only environment documents only core.
 
 Plugins document themselves (README / their own docs). They do not join this
-build. When a plugin is installed during a docs build, its config sections appear
+build. When a plugin is installed during a docs build, its config sections
+appear
 in the generated bench configuration reference.

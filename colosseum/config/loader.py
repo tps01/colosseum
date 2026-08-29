@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..context import RuntimeContext, apply_no_artifacts, get_context, init_context
-from ..logging import get_logger
-from ..plugins.loader import ensure_plugins_loaded
+from colosseum.context import RuntimeContext, apply_no_artifacts, get_context, init_context
+from colosseum.logging import get_logger
+from colosseum.plugins.loader import ensure_plugins_loaded
+
 from .metadata import validate_colosseum_metadata_table
-from .normalize import normalize_sections
-from .sections import ConfigSectionSpec
 from .toml_relaxed import read_relaxed_toml
-from .validate import collect_unknown_key_warnings, run_section_validators
+
+if TYPE_CHECKING:
+    from .sections import ConfigSectionSpec
 
 try:
     import tomllib
@@ -27,11 +28,7 @@ class ConfigError(RuntimeError):
 
 @dataclass
 class ConfigStore:
-    """Loaded bench TOML: raw nested dict plus ID-indexed plugin sections.
-
-    Normalized data is ``{dotted_path: {id: row}}``. Each dotted path comes from
-    one ``ConfigSectionSpec`` (one ID field, any number of other keys).
-    """
+    """Loaded bench TOML: raw nested dict plus ID-indexed plugin sections."""
 
     _raw: dict[str, Any]
     _normalized: dict[str, dict[int, dict[str, Any]]]
@@ -70,13 +67,52 @@ class ConfigStore:
         missing = [key for key in spec.required_keys if key not in item or item[key] in ("", None)]
         if missing:
             raise ConfigError(
-                f"Section `{dotted}` id `{item_id}` missing required keys: {', '.join(missing)}"
+                f"Section `{dotted}` id `{item_id}` missing required keys: {', '.join(missing)}",
             )
         return item
 
 
+def _get_dotted(raw: dict[str, Any], dotted: str) -> object | None:
+    cursor: object = raw
+    for part in dotted.split("."):
+        if not isinstance(cursor, dict) or part not in cursor:
+            return None
+        cursor = cursor[part]
+    return cursor
+
+
+def normalize_sections(
+    raw: dict[str, Any], specs: list[ConfigSectionSpec],
+) -> dict[str, dict[int, dict[str, Any]]]:
+    normalized: dict[str, dict[int, dict[str, Any]]] = {}
+    for spec in specs:
+        value = _get_dotted(raw, spec.dotted_path)
+        if value is None:
+            continue
+        if isinstance(value, dict):
+            rows = [value]
+        elif isinstance(value, list):
+            rows = value
+        else:
+            raise ValueError(f"Section `{spec.dotted_path}` must be table or array of tables")
+
+        by_id: dict[int, dict[str, Any]] = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError(f"Section `{spec.dotted_path}` contains non-table entries")
+            row_id = row.get(spec.id_field)
+            if row_id is None:
+                raise ValueError(f"Missing id field `{spec.id_field}` in `{spec.dotted_path}`")
+            if not isinstance(row_id, int):
+                raise ValueError(f"ID field `{spec.id_field}` in `{spec.dotted_path}` must be int")
+            if row_id in by_id:
+                raise ValueError(f"Duplicate id `{row_id}` in `{spec.dotted_path}`")
+            by_id[row_id] = row
+        normalized[spec.dotted_path] = by_id
+    return normalized
+
+
 def default_test_name() -> str:
-    """Derive a default run name from ``sys.argv[0]`` when present."""
     import sys
 
     main_script = Path(sys.argv[0])
@@ -100,20 +136,6 @@ def apply_raw_config(
     *,
     source_label: str,
 ) -> ConfigStore:
-    """Normalize and attach a raw config dict to the active run context.
-
-    :param ctx: Active runtime context.
-    :type ctx: RuntimeContext
-    :param raw: Nested config dict in the same shape as a parsed bench TOML.
-    :type raw: dict[str, Any]
-    :param source_label: Label stored as ``config_path`` (normally a file path).
-    :type source_label: str
-
-    :returns: Normalized configuration store for plugin sections.
-    :rtype: ConfigStore
-
-    :raises ConfigError: When normalization or validation fails.
-    """
     ensure_plugins_loaded(ctx.plugin_registry)
     specs = list(ctx.plugin_registry.config_section_specs())
     spec_map = {s.dotted_path: s for s in specs}
@@ -121,11 +143,7 @@ def apply_raw_config(
         normalized = normalize_sections(raw, specs)
     except ValueError as exc:
         raise ConfigError(str(exc)) from exc
-    ctx.config_warnings = collect_unknown_key_warnings(normalized, spec_map)
-    validator_map = {
-        spec.dotted_path: ctx.plugin_registry.validators_for(spec.dotted_path) for spec in specs
-    }
-    ctx.config_warnings.extend(run_section_validators(normalized, validator_map))
+    ctx.config_warnings = []
     colosseum_meta = raw.get("colosseum", {})
     if isinstance(colosseum_meta, dict):
         meta_table = colosseum_meta.get("metadata")
@@ -150,21 +168,6 @@ def load_config(
     no_artifacts: bool = False,
     metadata_path: str | Path | None = None,
 ) -> ConfigStore:
-    """Load and validate a bench TOML file into the active run context.
-
-    :param path: Path to the bench configuration file.
-    :type path: str | Path
-    :param no_artifacts: When ``True``, skip ``outputs/``, ``debug.log``, and on-disk SQLite.
-    :type no_artifacts: bool, optional
-    :param metadata_path: Optional WATS metadata YAML loaded after the bench TOML.
-    :type metadata_path: str | Path | None, optional
-
-    :returns: Normalized configuration store for plugin sections.
-    :rtype: ConfigStore
-
-    :raises ConfigError: When the file is missing, invalid TOML, or fails validation.
-    :raises RuntimeError: When ``no_artifacts`` is set after runtime bootstrap.
-    """
     config_path = Path(path).resolve()
     if not config_path.exists():
         raise ConfigError(f"Config file not found: {config_path}")
@@ -194,7 +197,6 @@ def load_config(
 
 
 def log_loaded_config(ctx: RuntimeContext) -> None:
-    """Emit DEBUG summary of normalized config sections (call after logging is ready)."""
     if ctx.config is None or ctx.logger is None:
         return
     store: ConfigStore = ctx.config
@@ -209,25 +211,13 @@ def log_loaded_config(ctx: RuntimeContext) -> None:
 
 
 def get(dotted: str, default: object | None = None) -> object | None:
-    """Read a top-level or nested config section from the loaded bench TOML.
-
-    :param dotted: Dotted section path (for example ``equipment.psu``).
-    :type dotted: str
-    :param default: Value returned when the section is absent.
-    :type default: object | None, optional
-
-    :returns: Section value, or ``default`` when missing.
-    :rtype: object | None
-
-    :raises ConfigError: When configuration has not been loaded and ``default`` is not given.
-    """
     try:
         ctx = get_context()
     except RuntimeError:
         if default is not None:
             return default
         raise ConfigError(
-            "Configuration is not loaded. Call col.config.load_config(path)."
+            "Configuration is not loaded. Call col.config.load_config(path).",
         ) from None
     if ctx.config is None:
         if default is not None:
@@ -240,11 +230,6 @@ def get(dotted: str, default: object | None = None) -> object | None:
 
 
 def is_loaded() -> bool:
-    """Report whether ``load_config`` has populated the active run context.
-
-    :returns: ``True`` when a configuration store is present on the context.
-    :rtype: bool
-    """
     try:
         ctx = get_context()
     except RuntimeError:

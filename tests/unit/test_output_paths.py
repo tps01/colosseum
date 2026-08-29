@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from colosseum.output.paths import (
+from colosseum.runner.runtime import (
     allocate_run_directory,
     rename_run_directory_for_result,
     sanitize_logical_name,
