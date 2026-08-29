@@ -1,0 +1,8 @@
+test_metadata:
+  location: TBD_PHYSICAL_LOCATION
+  process_code: "1234"
+  revision: "1.2.3"
+  serial_number: "123"
+  test_intent: Acceptance
+  user_name: USERNAME
+  uut: PARTNUMBER
