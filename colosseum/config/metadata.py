@@ -180,8 +180,6 @@ def load_metadata(path: str | Path) -> dict[str, Any]:
 
     :raises ConfigError: When the runtime or file is invalid.
     """
-    from .loader import ConfigError
-
     ctx = get_context()
     parsed = load_metadata_yaml(path)
     ctx.metadata_yaml = parsed

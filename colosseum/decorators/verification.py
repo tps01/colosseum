@@ -148,7 +148,7 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
             )
             if kwargs.get("compare_op") == "LOG":
                 expected = None
-                compare_op = "LOG"
+                compare_op: str | None = "LOG"
                 tolerance = None
             elif "expected_val" in kwargs:
                 expected = kwargs["expected_val"]

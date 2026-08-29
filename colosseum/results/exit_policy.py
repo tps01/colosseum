@@ -58,8 +58,8 @@ def _finalize_context(ctx: RuntimeContext) -> int:
         _close_logger_handlers(ctx.logger)
     ctx.db.close()
     if ctx.output_dir is not None:
-        from ..summary.writer import SummaryWriter
         from ..summary.wats import write_wats_report
+        from ..summary.writer import SummaryWriter
 
         ctx.output_dir = rename_run_directory_for_result(ctx.output_dir, overall)
         SummaryWriter().write(

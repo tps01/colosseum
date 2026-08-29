@@ -130,8 +130,8 @@ def finalize_script_slot(
     final_dir = ctx.output_dir
     if final_dir is not None and affects:
         final_dir = rename_run_directory_for_result(final_dir, overall)
-        from ..summary.writer import SummaryWriter
         from ..summary.wats import write_wats_report
+        from ..summary.writer import SummaryWriter
 
         SummaryWriter().write(
             final_dir,

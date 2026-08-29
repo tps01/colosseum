@@ -35,8 +35,10 @@ def format_wats_start(dt: datetime) -> str:
     """
     if dt.tzinfo is None or dt.utcoffset() is None:
         raise ValueError("WATS start time requires a timezone-aware datetime")
+    offset = dt.utcoffset()
+    assert offset is not None
     wall = dt.strftime("%Y-%m-%dT%H:%M:%S")
-    total_seconds = int(dt.utcoffset().total_seconds())
+    total_seconds = int(offset.total_seconds())
     sign = "+" if total_seconds >= 0 else "-"
     total_seconds = abs(total_seconds)
     hours, remainder = divmod(total_seconds, 3600)
@@ -223,11 +225,10 @@ def _verification_step(
         base["numericMeas"] = [_numeric_measurement(row, unit=unit)]
         return base
 
-    if compare_op := row.compare_op:
-        if compare_op == "LOG" and _is_number(actual):
-            base["stepType"] = "ET_NLT"
-            base["numericMeas"] = [_numeric_measurement(row, unit=unit)]
-            return base
+    if row.compare_op == "LOG" and _is_number(actual):
+        base["stepType"] = "ET_NLT"
+        base["numericMeas"] = [_numeric_measurement(row, unit=unit)]
+        return base
 
     if _is_string(actual) and _is_string(expected):
         base["stepType"] = "ET_SVT"
@@ -260,7 +261,9 @@ def _verification_step(
     return base
 
 
-def _build_misc_infos(ctx: RuntimeContext, meta: dict[str, Any], test_name: str) -> list[dict[str, Any]]:
+def _build_misc_infos(
+    ctx: RuntimeContext, meta: dict[str, Any], test_name: str
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = [
         {
             "description": "Colosseum Version:",
