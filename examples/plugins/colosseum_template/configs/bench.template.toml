@@ -1,6 +1,0 @@
-# TODO: Merge this section into your project bench TOML (or use as-is for smoke_test.py).
-
-[[template.device]]
-device_id = 1
-serial = "TEMPLATE-001"
-# label = "optional field"

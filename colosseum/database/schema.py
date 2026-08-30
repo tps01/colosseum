@@ -27,9 +27,12 @@ CREATE TABLE IF NOT EXISTS verifications (
   key TEXT NOT NULL,
   expected_json TEXT,
   actual_json TEXT,
+  tolerance_json TEXT,
+  compare_op TEXT,
   status TEXT NOT NULL,
   optional INTEGER NOT NULL DEFAULT 0,
   message TEXT,
+  step_name TEXT,
   timestamp TEXT NOT NULL
 );
 
@@ -38,14 +41,6 @@ CREATE TABLE IF NOT EXISTS events (
   level TEXT NOT NULL,
   source TEXT NOT NULL,
   message TEXT NOT NULL,
-  timestamp TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS artifacts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  kind TEXT NOT NULL,
-  path TEXT NOT NULL,
-  description TEXT,
   timestamp TEXT NOT NULL
 );
 

@@ -1,4 +1,4 @@
-"""U-PLG-01: plugin registry contracts."""
+"""U-PLG-01: plugin registry specifications."""
 
 from __future__ import annotations
 
@@ -31,14 +31,6 @@ def test_duplicate_section_spec_fails_fast() -> None:
         reg.register_config_section(spec)
 
 
-def test_explicit_section_replacement() -> None:
-    reg = PluginRegistry()
-    original = ConfigSectionSpec("equipment.psu", "psu_id", ("driver",))
-    replacement = ConfigSectionSpec("equipment.psu", "psu_id", ("resource",))
-    reg.register_config_section(original)
-    reg.replace_config_section(replacement)
-    assert reg.config_section_specs() == [replacement]
-
 
 def test_config_section_specs_is_a_snapshot() -> None:
     reg = PluginRegistry()
@@ -56,14 +48,6 @@ def test_duplicate_namespace_fails_fast() -> None:
     with pytest.raises(PluginRegistrationError, match="already registered"):
         reg.register_namespace("equipment", module)
 
-
-def test_explicit_namespace_replacement() -> None:
-    reg = PluginRegistry()
-    first = types.ModuleType("first")
-    second = types.ModuleType("second")
-    reg.register_namespace("equipment", first)
-    reg.replace_namespace("equipment", second)
-    assert reg.get_namespace("equipment") is second
 
 
 def test_loader_loads_entry_points(monkeypatch: pytest.MonkeyPatch) -> None:

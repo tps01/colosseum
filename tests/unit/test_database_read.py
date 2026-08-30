@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from colosseum.database import MeasurementRow
-from colosseum.database.records import MeasurementRecord
-import colosseum.database.read as read_api
+from colosseum.database import MeasurementRecord
+import colosseum.database as read_api
 
 
 def test_read_measurements_returns_typed_records(unit_runtime_context) -> None:

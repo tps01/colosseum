@@ -10,10 +10,13 @@ import cProfile
 import pstats
 import re
 import time
-from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from io import StringIO
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+    from pathlib import Path
 
 _PACKAGES_RE = r"colosseum[\\/]"
 _TEST_DIR_RES: dict[str, str] = {
@@ -174,7 +177,7 @@ def profile_pytest(
                     restriction=project_re,
                     strip_dirs=strip_dirs,
                 ),
-            ]
+            ],
         )
 
     return ProfileReport(

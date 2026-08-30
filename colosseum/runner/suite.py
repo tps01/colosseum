@@ -4,14 +4,20 @@ import re
 import time
 from dataclasses import dataclass
 from datetime import timedelta
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
-from ..config.toml_relaxed import read_relaxed_toml
-from ..output.suite_slots import begin_script_slot, ensure_suite_runtime_ready, finalize_script_slot
+from colosseum.config.toml_relaxed import read_relaxed_toml
+from colosseum.runner.runtime import (
+    begin_script_slot,
+    ensure_suite_runtime_ready,
+    finalize_script_slot,
+)
 
 if TYPE_CHECKING:
-    from ..context import RuntimeContext
+    from pathlib import Path
+
+    from colosseum.context import RuntimeContext
+    from colosseum.runner.run_options import RunOptions
 
 try:
     import tomllib
@@ -32,13 +38,6 @@ class SuiteTestEntry:
 
 
 @dataclass
-class ScheduledTestRun:
-    path: Path
-    test_index: int
-    repeat_index: int
-
-
-@dataclass
 class SuiteDefinition:
     name: str
     setup: list[Path]
@@ -47,6 +46,12 @@ class SuiteDefinition:
     teardown: list[Path]
     fail_fast: bool = False
     rip_cord: bool = False
+
+
+@dataclass(frozen=True)
+class _ScriptRunner:
+    run: Callable[[Path], None]
+    error_type: type[BaseException]
 
 
 class SuiteError(RuntimeError):
@@ -60,7 +65,7 @@ def parse_repeat_duration(value: str) -> timedelta:
     match = _DURATION_RE.fullmatch(text)
     if not match or not any(match.group(n) for n in ("days", "hours", "minutes", "seconds")):
         raise SuiteError(
-            f"Invalid repeat_for duration {value!r}; use suffixes s, m, h, d (e.g. 30s, 24h)"
+            f"Invalid repeat_for duration {value!r}; use suffixes s, m, h, d (e.g. 30s, 24h)",
         )
     return timedelta(
         days=int(match.group("days") or 0),
@@ -86,32 +91,27 @@ def _as_path_list(value: object, field: str, base_dir: Path) -> list[Path]:
 def _parse_test_entry(item: object, base_dir: Path, *, index: int) -> SuiteTestEntry:
     if isinstance(item, str):
         return SuiteTestEntry(path=(base_dir / item).resolve())
-    if isinstance(item, dict):
-        path = item.get("path")
-        if not path or not isinstance(path, str):
-            raise SuiteError(f"Suite tests[{index}] table requires string field `path`")
-        repeat_count = item.get("repeat_count")
-        repeat_for = item.get("repeat_for")
-        if repeat_count is not None and repeat_for is not None:
-            raise SuiteError(f"Suite tests[{index}] cannot set both repeat_count and repeat_for")
-        if repeat_count is not None:
-            if not isinstance(repeat_count, int) or isinstance(repeat_count, bool):
-                raise SuiteError(f"Suite tests[{index}] repeat_count must be an integer")
-            if repeat_count < 1:
-                raise SuiteError(f"Suite tests[{index}] repeat_count must be >= 1")
-            return SuiteTestEntry(
-                path=(base_dir / path).resolve(),
-                repeat_count=repeat_count,
-            )
-        if repeat_for is not None:
-            if not isinstance(repeat_for, str):
-                raise SuiteError(f"Suite tests[{index}] repeat_for must be a string")
-            return SuiteTestEntry(
-                path=(base_dir / path).resolve(),
-                repeat_for=parse_repeat_duration(repeat_for),
-            )
-        return SuiteTestEntry(path=(base_dir / path).resolve())
-    raise SuiteError(f"Suite tests[{index}] must be a path string or inline table")
+    if not isinstance(item, dict):
+        raise SuiteError(f"Suite tests[{index}] must be a path string or inline table")
+    path = item.get("path")
+    if not path or not isinstance(path, str):
+        raise SuiteError(f"Suite tests[{index}] table requires string field `path`")
+    resolved = (base_dir / path).resolve()
+    repeat_count = item.get("repeat_count")
+    repeat_for = item.get("repeat_for")
+    if repeat_count is not None and repeat_for is not None:
+        raise SuiteError(f"Suite tests[{index}] cannot set both repeat_count and repeat_for")
+    if repeat_count is not None:
+        if not isinstance(repeat_count, int) or isinstance(repeat_count, bool):
+            raise SuiteError(f"Suite tests[{index}] repeat_count must be an integer")
+        if repeat_count < 1:
+            raise SuiteError(f"Suite tests[{index}] repeat_count must be >= 1")
+        return SuiteTestEntry(path=resolved, repeat_count=repeat_count)
+    if repeat_for is not None:
+        if not isinstance(repeat_for, str):
+            raise SuiteError(f"Suite tests[{index}] repeat_for must be a string")
+        return SuiteTestEntry(path=resolved, repeat_for=parse_repeat_duration(repeat_for))
+    return SuiteTestEntry(path=resolved)
 
 
 def _parse_tests(value: object, base_dir: Path) -> list[SuiteTestEntry]:
@@ -120,35 +120,6 @@ def _parse_tests(value: object, base_dir: Path) -> list[SuiteTestEntry]:
     if not isinstance(value, list):
         raise SuiteError("Suite field `tests` must be a list")
     return [_parse_test_entry(item, base_dir, index=index) for index, item in enumerate(value)]
-
-
-def expand_test_schedule(tests: list[SuiteTestEntry]) -> list[ScheduledTestRun]:
-    """Expand count-based entries into a flat schedule (duration entries run at runtime)."""
-    schedule: list[ScheduledTestRun] = []
-    for test_index, entry in enumerate(tests):
-        if entry.repeat_for is not None:
-            raise SuiteError("expand_test_schedule does not support repeat_for entries")
-        for repeat_index in range(entry.repeat_count):
-            schedule.append(
-                ScheduledTestRun(
-                    path=entry.path,
-                    test_index=test_index,
-                    repeat_index=repeat_index,
-                )
-            )
-    return schedule
-
-
-def _entry_has_another_run(
-    entry: SuiteTestEntry,
-    repeat_index: int,
-    *,
-    deadline: float | None,
-) -> bool:
-    if entry.repeat_for is not None:
-        assert deadline is not None
-        return time.monotonic() < deadline
-    return repeat_index < entry.repeat_count
 
 
 def _as_bool(value: object, field: str) -> bool:
@@ -173,28 +144,27 @@ def load_suite_toml(path: Path) -> SuiteDefinition:
     name = raw.get("name")
     if not name or not isinstance(name, str):
         raise SuiteError("Suite TOML requires string field `name`")
-    tests = _parse_tests(raw.get("tests"), suite_path.parent)
+    base = suite_path.parent
+    tests = _parse_tests(raw.get("tests"), base)
     if not tests:
         raise SuiteError("Suite TOML requires non-empty `tests` list")
     for entry in tests:
         if not entry.path.exists():
             raise SuiteError(f"Test script not found: {entry.path}")
-    setup = _as_path_list(raw.get("setup"), "setup", suite_path.parent)
-    between_tests = _as_path_list(raw.get("between_tests"), "between_tests", suite_path.parent)
-    teardown = _as_path_list(raw.get("teardown"), "teardown", suite_path.parent)
+    setup = _as_path_list(raw.get("setup"), "setup", base)
+    between_tests = _as_path_list(raw.get("between_tests"), "between_tests", base)
+    teardown = _as_path_list(raw.get("teardown"), "teardown", base)
     for script_path in setup + between_tests + teardown:
         if not script_path.exists():
             raise SuiteError(f"Suite script not found: {script_path}")
-    fail_fast = _as_bool(raw.get("fail_fast"), "fail_fast")
-    rip_cord = _as_bool(raw.get("rip_cord"), "rip_cord")
     return SuiteDefinition(
         name=name,
         setup=setup,
         tests=tests,
         between_tests=between_tests,
         teardown=teardown,
-        fail_fast=fail_fast,
-        rip_cord=rip_cord,
+        fail_fast=_as_bool(raw.get("fail_fast"), "fail_fast"),
+        rip_cord=_as_bool(raw.get("rip_cord"), "rip_cord"),
     )
 
 
@@ -203,41 +173,48 @@ def _stop_remaining_tests(ctx: RuntimeContext, test_path: Path, reason: str) -> 
         ctx.db.insert_run_metadata("fail_fast_stopped", "1")
         ctx.db.insert_event("INFO", "runner", f"fail_fast_stop:{test_path}:{reason}")
     if ctx.logger is not None:
-        ctx.logger.error(
-            "fail_fast: stopping remaining tests after %s (%s)",
-            test_path,
-            reason,
-        )
+        ctx.logger.error("fail_fast: stopping remaining tests after %s (%s)", test_path, reason)
+
+
+def _repeat_exhausted(
+    entry: SuiteTestEntry, repeat_index: int, deadline: float | None,
+) -> bool:
+    if repeat_index == 0:
+        return False
+    if entry.repeat_for is not None:
+        return deadline is not None and time.monotonic() >= deadline
+    return repeat_index >= entry.repeat_count
 
 
 def _run_script_slot(
     suite: SuiteDefinition,
     ctx: RuntimeContext,
     script: Path,
+    runner: _ScriptRunner,
     *,
     phase: str,
     affects_suite_result: bool,
     test_index: int | None = None,
     repeat_index: int | None = None,
     entry: SuiteTestEntry | None = None,
-    run_script: object,
-    script_run_error: type[BaseException],
 ) -> tuple[bool, bool]:
-    """Run one script in its own output slot. Returns (rip_cord_abort, fail_fast_stop)."""
+    """Run one script slot. Returns (rip_cord_abort, fail_fast_stop)."""
     begin_script_slot(ctx, script.stem, phase=phase, affects_suite_result=affects_suite_result)
     ctx.slot_script_path = script
     ctx.slot_test_index = test_index
     ctx.slot_repeat_index = repeat_index
 
     if test_index is not None and repeat_index is not None and entry is not None:
-        ctx.db.insert_run_metadata("test_index", str(test_index))
-        ctx.db.insert_run_metadata("test_repeat_index", str(repeat_index))
+        repeat_meta = {"test_index": str(test_index), "test_repeat_index": str(repeat_index)}
         if entry.repeat_for is not None:
-            ctx.db.insert_run_metadata("repeat_mode", "duration")
-            ctx.db.insert_run_metadata("repeat_limit", str(int(entry.repeat_for.total_seconds())))
+            repeat_meta.update(
+                repeat_mode="duration",
+                repeat_limit=str(int(entry.repeat_for.total_seconds())),
+            )
         elif entry.repeat_count > 1:
-            ctx.db.insert_run_metadata("repeat_mode", "count")
-            ctx.db.insert_run_metadata("repeat_limit", str(entry.repeat_count))
+            repeat_meta.update(repeat_mode="count", repeat_limit=str(entry.repeat_count))
+        for key, value in repeat_meta.items():
+            ctx.db.insert_run_metadata(key, value)
         ctx.db.insert_event(
             "INFO",
             "runner",
@@ -246,58 +223,131 @@ def _run_script_slot(
 
     script_crash = False
     try:
-        run_script(script)  # type: ignore[operator]
-    except script_run_error:
+        runner.run(script)
+    except runner.error_type:
         script_crash = True
         ctx.result_aggregator.mark_suite_error(f"{phase} script failed")
 
     slot_has_failure = script_crash or not ctx.result_aggregator.overall_pass()
-    rip_abort = suite.rip_cord and slot_has_failure
-    if rip_abort:
+    if suite.rip_cord and slot_has_failure:
         ctx.rip_cord_triggered = True
+    rip_abort = suite.rip_cord and slot_has_failure
 
     stop_fail_fast = False
     if affects_suite_result and suite.fail_fast and slot_has_failure:
-        reason = "script_error" if script_crash else "required_failure"
-        _stop_remaining_tests(ctx, script, reason)
+        _stop_remaining_tests(ctx, script, "script_error" if script_crash else "required_failure")
         stop_fail_fast = True
 
     if not ctx.slot_finalized:
         finalize_script_slot(
-            ctx,
-            script_path=script,
-            test_index=test_index,
-            repeat_index=repeat_index,
+            ctx, script_path=script, test_index=test_index, repeat_index=repeat_index,
         )
-
     return rip_abort, stop_fail_fast
+
+
+def _run_phase_scripts(
+    suite: SuiteDefinition,
+    ctx: RuntimeContext,
+    scripts: list[Path],
+    runner: _ScriptRunner,
+    *,
+    phase: str,
+    affects_suite_result: bool,
+) -> tuple[bool, bool]:
+    for script in scripts:
+        rip_abort, stop_fail_fast = _run_script_slot(
+            suite,
+            ctx,
+            script,
+            runner,
+            phase=phase,
+            affects_suite_result=affects_suite_result,
+        )
+        if rip_abort or stop_fail_fast:
+            return rip_abort, stop_fail_fast
+    return False, False
+
+
+def _run_test_schedule(
+    suite: SuiteDefinition, ctx: RuntimeContext, runner: _ScriptRunner,
+) -> bool:
+    for test_index, entry in enumerate(suite.tests):
+        deadline = (
+            time.monotonic() + entry.repeat_for.total_seconds()
+            if entry.repeat_for is not None
+            else None
+        )
+        repeat_index = 0
+        while not _repeat_exhausted(entry, repeat_index, deadline):
+            rip_abort, stop_fail_fast = _run_script_slot(
+                suite,
+                ctx,
+                entry.path,
+                runner,
+                phase="test",
+                affects_suite_result=True,
+                test_index=test_index,
+                repeat_index=repeat_index,
+                entry=entry,
+            )
+            repeat_index += 1
+            if rip_abort or stop_fail_fast:
+                return True
+            another_in_entry = (
+                entry.repeat_for is not None and time.monotonic() < deadline  # type: ignore[operator]
+            ) or repeat_index < entry.repeat_count
+            if (another_in_entry or test_index + 1 < len(suite.tests)) and suite.between_tests:
+                between_rip, _ = _run_phase_scripts(
+                    suite,
+                    ctx,
+                    suite.between_tests,
+                    runner,
+                    phase="between_tests",
+                    affects_suite_result=False,
+                )
+                if between_rip:
+                    return True
+            if not another_in_entry:
+                break
+    return False
 
 
 def run_suite(
     suite_path: Path,
     config_path: Path | None = None,
+    metadata_path: Path | None = None,
     *,
     debug: bool = False,
     no_artifacts: bool = False,
+    run_options: RunOptions | None = None,
 ) -> int:
-    from ..config import load_config
-    from ..context import get_context, init_context
-    from ..results.exit_policy import finalize_suite
+    from colosseum.config import load_config
+    from colosseum.config.metadata import load_metadata
+    from colosseum.context import get_context, init_context
+    from colosseum.results.exit_policy import finalize_suite
+    from colosseum.runner.run_options import RunOptions
+
     from .single_test import ScriptRunError, run_script
 
     suite = load_suite_toml(suite_path)
+    options = run_options or RunOptions()
     init_context(
         test_case_name=suite.name,
         suite_name=suite.name,
         config_path=config_path.resolve() if config_path else None,
+        metadata_path=metadata_path.resolve() if metadata_path else None,
         no_artifacts=no_artifacts,
+        run_options=options,
     )
     ctx = get_context()
     ctx.debug_logging = debug
     if config_path:
-        load_config(config_path)
+        load_config(config_path, metadata_path=metadata_path)
+    elif metadata_path:
+        load_metadata(metadata_path)
 
     ensure_suite_runtime_ready(ctx, suite.name)
+    runner = _ScriptRunner(run_script, ScriptRunError)
     if ctx.logger is not None:
         ctx.logger.debug(
             "Suite %r: setup=%d tests=%d between=%d teardown=%d fail_fast=%s rip_cord=%s",
@@ -311,92 +361,25 @@ def run_suite(
         )
 
     rip_abort = False
-    for script in suite.setup:
-        rip_abort, _ = _run_script_slot(
+    if suite.setup:
+        rip_abort, _ = _run_phase_scripts(
             suite,
             ctx,
-            script,
+            suite.setup,
+            runner,
             phase="setup",
             affects_suite_result=False,
-            run_script=run_script,
-            script_run_error=ScriptRunError,
         )
-        if rip_abort:
-            break
-
     if not rip_abort:
-        stop_schedule = False
-        for test_index, entry in enumerate(suite.tests):
-            if stop_schedule:
-                break
-            deadline = (
-                time.monotonic() + entry.repeat_for.total_seconds()
-                if entry.repeat_for is not None
-                else None
-            )
-            repeat_index = 0
-            while True:
-                if entry.repeat_for is not None:
-                    if repeat_index > 0 and time.monotonic() >= deadline:  # type: ignore[operator]
-                        break
-                elif repeat_index >= entry.repeat_count:
-                    break
-
-                rip_abort, stop_fail_fast = _run_script_slot(
-                    suite,
-                    ctx,
-                    entry.path,
-                    phase="test",
-                    affects_suite_result=True,
-                    test_index=test_index,
-                    repeat_index=repeat_index,
-                    entry=entry,
-                    run_script=run_script,
-                    script_run_error=ScriptRunError,
-                )
-                repeat_index += 1
-                if rip_abort or stop_fail_fast:
-                    stop_schedule = True
-                    break
-
-                another_in_entry = _entry_has_another_run(
-                    entry, repeat_index, deadline=deadline
-                )
-                another_entry = test_index + 1 < len(suite.tests)
-                if another_in_entry or another_entry:
-                    for between_script in suite.between_tests:
-                        rip_abort, _ = _run_script_slot(
-                            suite,
-                            ctx,
-                            between_script,
-                            phase="between_tests",
-                            affects_suite_result=False,
-                            run_script=run_script,
-                            script_run_error=ScriptRunError,
-                        )
-                        if rip_abort:
-                            stop_schedule = True
-                            break
-                if rip_abort:
-                    break
-                if not another_in_entry:
-                    break
-            if rip_abort:
-                break
-
-    for script in suite.teardown:
-        rip_abort, _ = _run_script_slot(
+        rip_abort = _run_test_schedule(suite, ctx, runner)
+    if suite.teardown:
+        _run_phase_scripts(
             suite,
             ctx,
-            script,
+            suite.teardown,
+            runner,
             phase="teardown",
             affects_suite_result=False,
-            run_script=run_script,
-            script_run_error=ScriptRunError,
         )
-        if rip_abort:
-            break
 
-    code = finalize_suite(ctx)
-    raise SystemExit(code)
-
+    raise SystemExit(finalize_suite(ctx))

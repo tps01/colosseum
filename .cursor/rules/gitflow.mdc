@@ -5,8 +5,8 @@ alwaysApply: true
 
 # Gitflow
 
-- `main` is release-only; do normal work from `develop`.
-- Branch `feature/*` and `fix/*` from `develop`, then open focused PRs back to `develop`.
+- `main` is release-only; do normal work from feature branches branched from `develop`.
+- Branch `feature/*` and `bugfix/*` from `develop`, then open focused PRs back to `develop`.
 - Cut releases by merging `develop` into `main` and tagging the release on `main`.
 - Branch `hotfix/*` from `main`; merge hotfixes into both `main` and `develop`.
 - Do not commit, push, merge, tag, or create a PR unless the user explicitly requests it.

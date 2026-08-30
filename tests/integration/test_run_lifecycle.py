@@ -33,7 +33,7 @@ def test_decorators_create_sqlite_log_and_summary(core_config, isolated_cwd) -> 
         row[0]
         for row in query_db(run_dir, "SELECT name FROM sqlite_master WHERE type='table'")
     }
-    assert {"run_metadata", "measurements", "verifications", "events", "artifacts"} <= tables
+    assert {"run_metadata", "measurements", "verifications", "events"} <= tables
     summary = (run_dir / "summary.txt").read_text(encoding="utf-8")
     assert "Overall result: PASS" in summary
     import json

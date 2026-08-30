@@ -34,6 +34,10 @@ html_theme = "alabaster"
 html_static_path = ["_static"]
 
 latex_engine = "pdflatex"
+latex_elements = {
+    # Avoid blank verso pages before each short chapter in the PDF manual.
+    "classoptions": ",openany",
+}
 latex_documents = [
     ("index_pdf", "colosseum.tex", "Colosseum", "Colosseum contributors", "manual"),
 ]

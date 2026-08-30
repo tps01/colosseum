@@ -7,6 +7,7 @@ from .loader import (
     is_loaded,
     load_config,
 )
+from .metadata import load_metadata
 
 __all__ = [
     "ConfigError",
@@ -16,4 +17,5 @@ __all__ = [
     "get",
     "is_loaded",
     "load_config",
+    "load_metadata",
 ]

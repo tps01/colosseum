@@ -24,7 +24,7 @@ class _EntryPoint:
         return register
 
 
-def test_entry_point_registers_plugin_contract(monkeypatch) -> None:
+def test_entry_point_registers_plugin_specification(monkeypatch) -> None:
     monkeypatch.setattr(loader, "entry_points_for_group", lambda _group: [_EntryPoint()])
     registry = PluginRegistry()
 

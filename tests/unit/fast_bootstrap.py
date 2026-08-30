@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 import shutil
 import sqlite3
-from collections import defaultdict
 from pathlib import Path
 
 from colosseum.database.manager import DatabaseManager
@@ -19,9 +18,6 @@ from colosseum.plugins.registry import PluginRegistry
 def seed_registry(dest: PluginRegistry, source: PluginRegistry) -> None:
     """Copy registration state into ``dest`` without reloading entry points."""
     dest._sections = dict(source._sections)
-    dest._validators = defaultdict(
-        list, {key: list(vals) for key, vals in source._validators.items()}
-    )
     dest._namespaces = dict(source._namespaces)
     # Do not share shutdown hooks across tests.
     dest._shutdown_hooks = []

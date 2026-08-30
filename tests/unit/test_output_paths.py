@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from colosseum.output.paths import (
+from colosseum.runner.runtime import (
     allocate_run_directory,
     rename_run_directory_for_result,
     sanitize_logical_name,
@@ -17,9 +17,10 @@ def test_sanitize_strips_unsafe_characters() -> None:
 
 
 def test_allocate_run_directory_format_and_collision(isolated_cwd) -> None:
-    first = allocate_run_directory(isolated_cwd, "smoke test")
+    outputs_root = isolated_cwd / "outputs"
+    first = allocate_run_directory(outputs_root, "smoke test")
     first.mkdir()
-    second = allocate_run_directory(isolated_cwd, "smoke test")
+    second = allocate_run_directory(outputs_root, "smoke test")
     pattern = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{6}_smoke_test(_\d+)?$")
     assert pattern.match(first.name)
     assert second != first
@@ -27,9 +28,10 @@ def test_allocate_run_directory_format_and_collision(isolated_cwd) -> None:
 
 
 def test_allocate_run_directory_under_parent(isolated_cwd) -> None:
-    parent = isolated_cwd / "outputs" / "suite_container"
+    outputs_root = isolated_cwd / "outputs"
+    parent = outputs_root / "suite_container"
     parent.mkdir(parents=True)
-    child = allocate_run_directory(isolated_cwd, "probe", parent=parent)
+    child = allocate_run_directory(outputs_root, "probe", parent=parent)
     assert child.parent == parent
     assert child.name.startswith("20")
     assert child.name.endswith("_probe")

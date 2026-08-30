@@ -7,9 +7,8 @@ import pytest
 import colosseum as col
 import colosseum.context as context_module
 from colosseum.config.loader import load_config
-from colosseum.context import apply_no_artifacts, init_context, get_context
-from colosseum.output.artifacts import resolve_artifact_path
-from colosseum.output.paths import ensure_output_dir, ensure_runtime_ready
+from colosseum.context import apply_no_artifacts, get_context, init_context
+from colosseum.runner.runtime import ensure_output_dir, ensure_runtime_ready
 
 from tests.support.core_api import measure_value
 from tests.support.helpers import run_endex_expect_code
@@ -42,14 +41,6 @@ def test_ensure_output_dir_raises_in_no_artifacts_mode(core_config) -> None:
 
     with pytest.raises(RuntimeError, match="no-artifacts mode"):
         ensure_output_dir(ctx)
-
-
-def test_resolve_artifact_path_raises_in_no_artifacts_mode(core_config) -> None:
-    load_config(core_config, no_artifacts=True)
-    measure_value(key="rail", value=3.3)
-
-    with pytest.raises(RuntimeError, match="no-artifacts mode"):
-        resolve_artifact_path("traces/foo.csv")
 
 
 def test_late_no_artifacts_toggle_raises(core_config) -> None:

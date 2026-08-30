@@ -4,8 +4,17 @@ from __future__ import annotations
 
 import pytest
 
-from colosseum.config.normalize import _get_dotted, normalize_sections
+from colosseum.config.loader import normalize_sections
 from colosseum.config.sections import ConfigSectionSpec
+
+
+def _get_dotted(raw: dict, dotted: str) -> object | None:
+    cursor: object = raw
+    for part in dotted.split("."):
+        if not isinstance(cursor, dict) or part not in cursor:
+            return None
+        cursor = cursor[part]
+    return cursor
 
 
 PSU_SPEC = ConfigSectionSpec(

@@ -1,22 +1,13 @@
 Quickstart
 ==========
 
-Core applications are ordinary Python scripts. Installed plugins provide the bench APIs::
+Colosseum test cases are Python scripts that call ``col.<namespace>.*`` APIs from
+installed plugins, then finalize with ``col.endex()``.
 
-   import colosseum as col
+::
 
-   def main():
-       col.config.load_config("bench.toml")
-       col.acme.measure_value(device_id=1, key="value")
-       col.acme.verify_value(key="value", expected_val=10.0)
+   colosseum run my_test.py -g config.toml
 
-   if __name__ == "__main__":
-       main()
-       col.endex()
-
-Run the script directly or through the CLI::
-
-   colosseum run my_test.py --config bench.toml
-
-``col.endex()`` finalizes logs, SQLite evidence, summaries, plugin shutdown hooks, and
-the process exit code. Extension authors should start with :doc:`plugins`.
+See :doc:`running_tests` for CLI flags and :doc:`writing_test_scripts` for a full
+walkthrough with matching config TOML and metadata YAML. Extension authors should
+start with :doc:`plugins`.

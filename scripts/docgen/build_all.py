@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Build Colosseum core documentation: handwritten guides + config reference.
+Build Colosseum core documentation: handwritten guides.
 
 1. Copy ``docs/sphinx/source/`` into ``build/docgen/site/source/``
-2. Generate ``guides/bench_config_reference.rst`` from installed plugins
-3. Run ``sphinx-build`` for HTML and optionally LaTeX/PDF
+2. Run ``sphinx-build`` for HTML and optionally LaTeX/PDF
 """
 
 from __future__ import annotations
@@ -23,7 +22,6 @@ _scripts_dir = Path(__file__).resolve().parents[1]
 if str(_scripts_dir) not in sys.path:
     sys.path.insert(0, str(_scripts_dir))
 
-from build_config_reference import build_config_reference_rst  # noqa: E402
 from build_pdf import build_pdf  # noqa: E402
 
 from ci.timing import ci_phase  # noqa: E402
@@ -42,7 +40,7 @@ def build_staged_site(
     docgen_root: Path | None = None,
     clean: bool = False,
 ) -> Path:
-    """Copy guides and generate the bench config reference into the site source tree.
+    """Copy guides into the site source tree.
 
     :param docgen_root: Staging root (default: ``build/docgen`` under repo root).
     :type docgen_root: Path | None, optional
@@ -68,11 +66,6 @@ def build_staged_site(
             shutil.rmtree(site_source)
 
         shutil.copytree(guides_root, site_source)
-
-        print("Building bench config reference")
-        build_config_reference_rst(
-            output_path=site_source / "guides" / "bench_config_reference.rst"
-        )
 
     return site_root
 
@@ -172,10 +165,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--docgen-root", type=Path, help="Default: build/docgen")
     parser.add_argument("--clean", action="store_true", help="Remove staged outputs before build")
     parser.add_argument(
-        "--skip-html", action="store_true", help="Build PDF only (still runs staging)"
+        "--skip-html", action="store_true", help="Build PDF only (still runs staging)",
     )
     parser.add_argument(
-        "--skip-pdf", action="store_true", help="Build HTML only (no LaTeX required)"
+        "--skip-pdf", action="store_true", help="Build HTML only (no LaTeX required)",
     )
     args = parser.parse_args(argv)
 

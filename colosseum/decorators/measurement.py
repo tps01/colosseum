@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from functools import wraps
-from typing import Any, TypeVar, overload
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
-from ..database import MeasurementRow
-from ..output import ensure_runtime_ready
-from ._common import ensure_runtime_context, resolve_command, resolve_domain
+from colosseum.database import MeasurementRow
+
+from ._common import (
+    ensure_runtime_context,
+    resolve_command,
+    resolve_domain,
+    should_skip_measurement,
+)
+from ._kernel import log_evidence, log_evidence_error, record_error_event, short_repr
 from ._typing import ParamSpec
 from .command import COLOSSEUM_DECORATOR
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -26,28 +34,13 @@ def measurement(func: Callable[P, R], /) -> Callable[P, R]: ...
 
 @overload
 def measurement(
-    func: None = None, /, *, multi_row: bool = False
+    func: None = None, /, *, multi_row: bool = False,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def measurement(
-    _func: Callable[..., Any] | None = None, *, multi_row: bool = False
+    _func: Callable[..., Any] | None = None, *, multi_row: bool = False,
 ) -> object:
-    """Decorator that records return values in ``execution.sqlite``.
-
-    Wrapped functions must accept ``key=`` (and ``row_index=`` when ``multi_row=True``).
-    Domain and command names are inferred from the defining module. First-party
-    APIs include their public group in the command name, such as
-    ``dmm.measure_voltage`` or ``psu.measure_voltage``.
-
-    :param _func: Function to wrap when used as ``@measurement`` without parentheses.
-    :type _func: Callable | None
-    :param multi_row: When ``True``, allow multiple rows per key using ``row_index=``.
-    :type multi_row: bool
-
-    :returns: The decorated callable. Re-raises exceptions after recording ERROR.
-    """
-
     def decorate(func: Callable[..., Any]) -> Callable[..., Any]:
         domain = resolve_domain(func)
         command = resolve_command(func)
@@ -55,7 +48,8 @@ def measurement(
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             ctx = ensure_runtime_context()
-            ensure_runtime_ready(ctx)
+            if should_skip_measurement(ctx):
+                return None
             key = kwargs.get("key")
             if not key:
                 raise MeasurementKeyError(f"`{command}` requires `key=`")
@@ -63,20 +57,20 @@ def measurement(
             if multi_row and "row_index" not in kwargs:
                 raise MeasurementKeyError(f"`{command}` with multi_row=True requires `row_index=`")
             if not multi_row:
-                existing_rows = ctx.db.list_measurements(domain=domain, command=command, key=key)
-                if existing_rows:
+                if ctx.db.list_measurements(domain=domain, command=command, key=key):
                     raise MeasurementKeyError(
-                        f"Duplicate measurement key for ({domain}, {command}, {key})"
+                        f"Duplicate measurement key for ({domain}, {command}, {key})",
                     )
-            else:
-                existing_row = ctx.db.get_measurement(
-                    domain=domain, command=command, key=key, row_index=row_index
+            elif (
+                ctx.db.get_measurement(
+                    domain=domain, command=command, key=key, row_index=row_index,
                 )
-                if existing_row is not None:
-                    raise MeasurementKeyError(
-                        f"Duplicate measurement key for ({domain}, {command}, {key}, "
-                        f"row_index={row_index})"
-                    )
+                is not None
+            ):
+                raise MeasurementKeyError(
+                    f"Duplicate measurement key for ({domain}, {command}, {key}, "
+                    f"row_index={row_index})",
+                )
             try:
                 value = func(*args, **kwargs)
                 ctx.db.insert_measurement(
@@ -87,28 +81,23 @@ def measurement(
                         row_index=row_index,
                         value=value,
                         status="PASS",
-                    )
+                    ),
                 )
-                if ctx.logger is not None:
-                    value_repr = repr(value)
-                    if len(value_repr) > 120:
-                        value_repr = value_repr[:117] + "..."
-                    ctx.logger.debug(
-                        "measurement %s.%s key=%s row_index=%s value=%s",
-                        domain,
-                        command,
-                        key,
-                        row_index,
-                        value_repr,
-                    )
-                    ctx.logger.info("measurement %s.%s key=%s status=PASS", domain, command, key)
+                log_evidence(
+                    ctx,
+                    kind="measurement",
+                    domain=domain,
+                    command=command,
+                    key=key,
+                    status="PASS",
+                    detail=f"row_index={row_index} value={short_repr(value)}",
+                )
                 return value
             except Exception as exc:
-                if ctx.logger is not None:
-                    ctx.logger.exception(
-                        "measurement %s.%s key=%s status=ERROR", domain, command, key
-                    )
-                ctx.db.insert_event("ERROR", f"{domain}.{command}", str(exc))
+                log_evidence_error(
+                    ctx, kind="measurement", domain=domain, command=command, key=key,
+                )
+                record_error_event(ctx, domain=domain, command=command, exc=exc)
                 ctx.db.insert_measurement(
                     MeasurementRow(
                         domain=domain,
@@ -117,7 +106,7 @@ def measurement(
                         row_index=row_index,
                         value=None,
                         status="ERROR",
-                    )
+                    ),
                 )
                 raise
 

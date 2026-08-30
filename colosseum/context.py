@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-import logging
 import os
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .database import DatabaseManager
 from .results.aggregation import ResultAggregator
+from .runner.run_options import ExecutionMode, RunOptions
 
 if TYPE_CHECKING:
+    import logging
+
     from .config.loader import ConfigStore
     from .plugins.registry import PluginRegistry
 else:
@@ -49,12 +52,17 @@ class RuntimeContext:
     slot_script_path: Path | None = None
     slot_test_index: int | None = None
     slot_repeat_index: int | None = None
+    metadata_yaml: dict[str, Any] = field(default_factory=dict)
+    metadata_path: str | None = None
+    started_at: datetime | None = None
+    run_options: RunOptions = field(default_factory=RunOptions)
+    active_execution_mode: ExecutionMode = "full"
 
 
 def get_context() -> RuntimeContext:
     if _ACTIVE_CONTEXT is None:
         raise RuntimeError(
-            "Runtime is not initialized. Call col.config.load_config() or use `colosseum run`."
+            "Runtime is not initialized. Call col.config.load_config() or use `colosseum run`.",
         )
     return _ACTIVE_CONTEXT
 
@@ -76,7 +84,7 @@ def apply_no_artifacts(ctx: RuntimeContext, *, no_artifacts: bool) -> None:
     if ctx.runtime_ready or ctx.output_dir is not None:
         raise RuntimeError(
             "no_artifacts must be set before the runtime is bootstrapped "
-            "(before the first col.* call or colosseum run output allocation)."
+            "(before the first col.* call or colosseum run output allocation).",
         )
     ctx.no_artifacts = True
 
@@ -86,9 +94,13 @@ def init_context(
     test_case_name: str,
     suite_name: str | None = None,
     config_path: Path | str | None = None,
+    metadata_path: Path | str | None = None,
     no_artifacts: bool = False,
     auto_finalize: bool = False,
+    run_options: RunOptions | None = None,
 ) -> RuntimeContext:
+    from datetime import timezone
+
     from . import __version__
     from .plugins.registry import PluginRegistry
 
@@ -105,6 +117,12 @@ def init_context(
         framework_version=__version__,
         no_artifacts=no_artifacts or _env_no_artifacts(),
         auto_finalize=auto_finalize,
+        metadata_path=str(Path(metadata_path).resolve()) if metadata_path else None,
+        started_at=datetime.now(timezone.utc).astimezone(),
+        run_options=run_options if run_options is not None else RunOptions(),
+        active_execution_mode=(
+            run_options.execution_mode if run_options is not None else "full"
+        ),
     )
     if auto_finalize:
         from .results.exit_policy import register_auto_finalize_hooks

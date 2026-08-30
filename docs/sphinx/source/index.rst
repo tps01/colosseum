@@ -1,7 +1,7 @@
 Colosseum
 =========
 
-Bench test automation for embedded systems.
+Test automation for embedded systems.
 
 .. toctree::
    :maxdepth: 2
@@ -9,9 +9,9 @@ Bench test automation for embedded systems.
 
    guides/installation
    guides/quickstart
-   guides/configuration
-   guides/bench_config_reference
    guides/running_tests
+   guides/writing_test_scripts
+   guides/configuration
    guides/running_suites
    guides/output_artifacts
    guides/exit_codes

@@ -28,7 +28,7 @@ def test_run_worker_streams_stdout_before_process_finishes(
     )
 
     worker = RunWorker(cwd=isolated_cwd)
-    worker.start(RunRequest(RunKind.TEST, script, config_path=None, debug=False))
+    worker.start(RunRequest(RunKind.TEST, script, config_path=None, metadata_path=None, debug=False))
 
     saw_live_line_while_running = False
     finished: RunFinished | None = None

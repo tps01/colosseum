@@ -1,4 +1,4 @@
-"""Relaxed TOML parsing for bench and suite configs."""
+"""Relaxed TOML parsing for config and suite files."""
 
 from __future__ import annotations
 

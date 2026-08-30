@@ -3,16 +3,19 @@
 Colosseum
 =========
 
-End-user guide: run tests, configure benches, and call public ``col.*`` APIs.
+User guide for running tests and developing plugins.
+
+.. raw:: latex
+
+   \part{Using Colosseum}
 
 .. toctree::
    :maxdepth: 2
-   :caption: Running Colosseum
 
-   guides/quickstart
+   guides/installation
    guides/running_tests
+   guides/writing_test_scripts
    guides/configuration
-   guides/bench_config_reference
    guides/running_suites
    guides/measurements_verifications
    guides/output_artifacts

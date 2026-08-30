@@ -1,10 +1,12 @@
-"""Relax bench/suite TOML: bare words on the RHS of ``key = value`` become strings."""
+"""Relax config/suite TOML: bare words on the RHS of ``key = value`` become strings."""
 
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 try:
     import tomllib
