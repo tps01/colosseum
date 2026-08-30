@@ -68,3 +68,18 @@ jobs:
           /tmp/colosseum-core-wheel/bin/pip install dist/*.whl
           /tmp/colosseum-core-wheel/bin/python -c "import colosseum; print(colosseum.__version__)"
           /tmp/colosseum-core-wheel/bin/colosseum --help
+
+  regression:
+    name: regression (ubuntu, py3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -U pip setuptools wheel
+      - run: python -m pip install -e .
+      - run: python tests/regression/run_soak_sim.py --count 5
+      - run: python tests/regression/run_soak_inprocess.py --repeat 50
+      - run: python tests/regression/run_docgen_check.py --skip-pdf

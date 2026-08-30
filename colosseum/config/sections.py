@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ConfigSectionSpec:
-    """Declare one bench TOML section owned by a plugin.
+    """Declare one config TOML section owned by a plugin.
 
     Each spec has exactly one dotted table path, exactly one integer ID field,
     and any number of required or optional keys (including none of either).

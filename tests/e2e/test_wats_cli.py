@@ -6,7 +6,7 @@ import re
 
 import pytest
 
-from tests.support.e2e_contracts import (
+from tests.support.e2e_specifications import (
     assert_wats_identity_fields,
     find_wats_json,
     load_wats_json,

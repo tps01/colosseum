@@ -1,4 +1,4 @@
-"""WATS metadata YAML and bench TOML merge."""
+"""Metadata YAML and config TOML merge."""
 
 from __future__ import annotations
 

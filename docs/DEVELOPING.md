@@ -38,7 +38,7 @@ change and release automation builds the PDF.
 - Keep plugin packages responsible for their own device examples, simulation
   fixtures, and
   integration tests.
-- Core may document the plugin contract but must not hard-code first-party
+- Core may document the plugin specification but must not hard-code first-party
   plugin modules.
 
 ## Releases

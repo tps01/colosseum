@@ -1,4 +1,4 @@
-"""WATS test metadata from YAML files and ``[colosseum.metadata]`` bench TOML."""
+"""Run metadata from YAML files and ``[colosseum.metadata]`` in config TOML."""
 
 from __future__ import annotations
 

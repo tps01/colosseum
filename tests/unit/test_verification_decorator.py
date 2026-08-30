@@ -74,7 +74,7 @@ def test_exception_becomes_error_status(ctx) -> None:
 
 
 def test_optional_kwarg_requires_wrapped_parameter(ctx) -> None:
-    """Document contract: optional= must be accepted by the wrapped function signature."""
+    """Document specification: optional= must be accepted by the wrapped function signature."""
 
     @verification()
     def no_optional_param(*, key: str) -> bool:

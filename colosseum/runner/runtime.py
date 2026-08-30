@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, cast
 from colosseum.database import DatabaseManager, initialize_database_if_needed
 from colosseum.logging import setup_logging
 from colosseum.results.aggregation import ResultAggregator
+from colosseum.runner.run_options import resolve_outputs_root
 
 if TYPE_CHECKING:
     from colosseum.context import RuntimeContext
@@ -29,20 +30,20 @@ def sanitize_logical_name(logical_name: str) -> str:
 
 
 def allocate_run_directory(
-    cwd: Path,
+    outputs_root: Path,
     logical_name: str,
     *,
     parent: Path | None = None,
 ) -> Path:
-    outputs_root = parent if parent is not None else cwd / "outputs"
+    base = parent if parent is not None else outputs_root
     if parent is None:
-        outputs_root.mkdir(parents=True, exist_ok=True)
+        base.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     run_name = f"{stamp}_{sanitize_logical_name(logical_name)}"
-    candidate = outputs_root / run_name
+    candidate = base / run_name
     suffix = 1
     while candidate.exists():
-        candidate = outputs_root / f"{run_name}_{suffix}"
+        candidate = base / f"{run_name}_{suffix}"
         suffix += 1
     return candidate
 
@@ -74,7 +75,7 @@ def ensure_runtime_ready(ctx: RuntimeContext, logical_name: str | None = None) -
         ctx.logger.debug("Runtime ready (no-artifacts mode)")
         initialize_database_if_needed(ctx)
     else:
-        output_dir = allocate_run_directory(Path.cwd(), logical_name)
+        output_dir = allocate_run_directory(resolve_outputs_root(ctx.run_options), logical_name)
         output_dir.mkdir(parents=True, exist_ok=True)
         ctx.output_dir = output_dir
         ctx.logger = setup_logging(ctx, console=True, console_level=console_level, file=True)
@@ -117,7 +118,7 @@ def ensure_suite_runtime_ready(ctx: RuntimeContext, suite_name: str) -> None:
         ctx.suite_output_dir = None
         ctx.logger = setup_logging(ctx, console=True, console_level=console_level, file=False)
         return
-    container = allocate_run_directory(Path.cwd(), suite_name)
+    container = allocate_run_directory(resolve_outputs_root(ctx.run_options), suite_name)
     container.mkdir(parents=True, exist_ok=True)
     ctx.suite_output_dir = container
     ctx.logger = setup_logging(ctx, console=True, console_level=console_level, file=False)
@@ -147,10 +148,19 @@ def begin_script_slot(
         initialize_database_if_needed(ctx)
         ctx.runtime_ready = True
         return
+    ctx.active_execution_mode = (
+        "procedure"
+        if phase == "test" and ctx.run_options.execution_mode == "procedure"
+        else "full"
+    )
     parent = ctx.suite_output_dir
     if parent is None:
         raise RuntimeError("Suite container is not allocated")
-    slot_dir = allocate_run_directory(Path.cwd(), logical_name, parent=parent)
+    slot_dir = allocate_run_directory(
+        resolve_outputs_root(ctx.run_options),
+        logical_name,
+        parent=parent,
+    )
     slot_dir.mkdir(parents=True, exist_ok=True)
     ctx.output_dir = slot_dir
     ctx.logger = setup_logging(ctx, console=True, console_level=console_level, file=True)

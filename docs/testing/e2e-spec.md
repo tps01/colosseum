@@ -11,7 +11,7 @@ plugins are installed.
 
 Integration tests under `tests/integration/` mirror many suite behaviors
 in-process
-for faster feedback; this document is the user-facing CLI contract.
+for faster feedback; this document is the user-facing CLI specification.
 
 ## Single run (`colosseum run`)
 
@@ -128,12 +128,74 @@ finalize it is renamed with `-pass` or `-fail`.
 
 **Test:** `test_run_cli.py::test_output_dir_renamed_after_finalize`
 
+### E2E-RUN-09
+
+**Behavior:** `-i/--input-dir` resolves the positional script against a base directory.
+
+**Acceptance criteria:**
+
+- Exit code 0 when the script exists under `{input_dir}/{test_file}`.
+
+**Fixtures:** `optional_fail_test.py`
+
+**Test:** `test_run_cli.py::test_input_dir_resolves_relative_script`
+
+### E2E-RUN-10
+
+**Behavior:** `-o/--output-dir` selects a custom output root for timestamped run folders.
+
+**Acceptance criteria:**
+
+- Run directory is created under the custom root, not `cwd/outputs/`.
+
+**Fixtures:** `optional_fail_test.py`
+
+**Test:** `test_run_cli.py::test_output_dir_places_runs_under_custom_root`
+
+### E2E-RUN-11
+
+**Behavior:** Standalone `-c/--command` runs produce command evidence and artifacts.
+
+**Acceptance criteria:**
+
+- Exit code 0.
+- `commands` table contains the invoked plugin command row.
+
+**Test:** `test_cli_standalone_command.py::test_standalone_command_run_writes_artifacts`
+
+### E2E-RUN-12
+
+**Behavior:** `-p/--procedure` skips verification recording while running measurements.
+
+**Acceptance criteria:**
+
+- Exit code 0 for a script that would normally record verifications.
+- Zero rows in `verifications`; at least one measurement row.
+
+**Fixtures:** `optional_fail_test.py`
+
+**Test:** `test_run_cli.py::test_procedure_mode_skips_verifications`
+
+### E2E-RUN-13
+
+**Behavior:** `-u/--use-previous-output` imports prior measurements/commands and re-runs
+verifications.
+
+**Acceptance criteria:**
+
+- Second run exit code 0 with verification PASS using imported measurements.
+- `run_metadata.imported_from` points at the prior run directory.
+
+**Fixtures:** `measure_only_test.py`, `verify_only_test.py`
+
+**Test:** `test_run_cli.py::test_use_previous_output_reruns_verifications`
+
 ## Direct Python execution
 
 ### E2E-DIR-01
 
 **Behavior:** `python script.py` with `load_config` and `col.endex()` matches
-the CLI artifact contract.
+the CLI artifact specification.
 
 **Acceptance criteria:**
 
@@ -142,7 +204,7 @@ the CLI artifact contract.
 
 **Fixtures:** `optional_fail_test.py`
 
-**Test:** `test_run_direct.py::test_direct_python_matches_cli_contract`
+**Test:** `test_run_direct.py::test_direct_python_matches_cli_specification`
 
 ### E2E-DIR-02
 
@@ -301,11 +363,24 @@ files.
 
 **Test:** `test_suite_cli.py::test_suite_metadata_propagates_to_wats`
 
+### E2E-SUITE-11
+
+**Behavior:** Suite `-p/--procedure` runs test slots without recording verifications.
+
+**Acceptance criteria:**
+
+- Exit code 0.
+- Test slot has measurements but zero verification rows.
+
+**Fixtures:** `suites/procedure_suite.toml`
+
+**Test:** `test_suite_cli.py::test_suite_procedure_mode_skips_verifications`
+
 ## Configuration errors
 
 ### E2E-CFG-01
 
-**Behavior:** Invalid bench TOML exits 1 before the suite runs.
+**Behavior:** Invalid config TOML exits 1 before the suite runs.
 
 **Acceptance criteria:**
 

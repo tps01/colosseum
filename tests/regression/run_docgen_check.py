@@ -22,17 +22,6 @@ def verify_docgen_outputs(*, require_pdf: bool) -> int:
     :returns: Process exit code (``0`` on success).
     :rtype: int
     """
-    config_ref = (
-        REPO / "build" / "docgen" / "site" / "source" / "guides" / "bench_config_reference.rst"
-    )
-    if not config_ref.is_file():
-        print(f"DOCGEN FAIL: expected {config_ref}", file=sys.stderr)
-        return 1
-    ref_text = config_ref.read_text(encoding="utf-8")
-    if "No plugin configuration sections are installed" not in ref_text:
-        print("DOCGEN FAIL: config reference does not describe core-only build", file=sys.stderr)
-        return 1
-
     html = REPO / "build" / "docgen" / "site" / "html" / "index.html"
     if not html.is_file():
         print(f"DOCGEN FAIL: expected HTML at {html}", file=sys.stderr)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.support.e2e_contracts import (
+from tests.support.e2e_specifications import (
     assert_suite_container,
     assert_supporting_slot_artifacts,
     assert_test_slot_full_artifacts,
@@ -187,9 +187,28 @@ def test_suite_metadata_propagates_to_wats(
 
 @pytest.mark.requirement("E2E-CFG-01")
 def test_bad_config_exits_one(fixtures_dir, isolated_cwd, subprocess_env) -> None:
-    """Invalid bench TOML exits 1 before the suite runs."""
+    """Invalid config TOML exits 1 before the suite runs."""
     config = isolated_cwd / "bad.toml"
     config.write_text('[runtime\nlabel = "broken"\n', encoding="utf-8")
     proc = run_suite_cli(_suite(fixtures_dir, "happy.toml"), config, isolated_cwd, subprocess_env)
     assert proc.returncode == 1
     assert not (isolated_cwd / "outputs").exists()
+
+
+@pytest.mark.requirement("E2E-SUITE-11")
+def test_suite_procedure_mode_skips_verifications(
+    core_config, fixtures_dir, isolated_cwd, subprocess_env,
+) -> None:
+    """Suite -p runs test slots in procedure mode without verification rows."""
+    proc = run_suite_cli(
+        _suite(fixtures_dir, "procedure_suite.toml"),
+        core_config,
+        isolated_cwd,
+        subprocess_env,
+        extra_args=["-p"],
+    )
+    assert proc.returncode == 0, proc.stderr
+    container = latest_suite_container(isolated_cwd)
+    slot = _slot(container, "optional_fail_test")
+    assert query_db(slot, "SELECT COUNT(*) FROM verifications")[0][0] == 0
+    assert query_db(slot, "SELECT COUNT(*) FROM measurements")[0][0] >= 1

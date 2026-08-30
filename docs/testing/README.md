@@ -6,13 +6,20 @@ Core tests are standalone and never require sibling plugin repositories.
 python scripts/run_tests.py
 python scripts/run_static.py
 python tests/regression/run_soak_sim.py --count 5
+python tests/regression/run_soak_inprocess.py --repeat 50
 python tests/regression/run_docgen_check.py --skip-pdf
 python -m build
 ```
 
+Regression soaks (also via `python scripts/run_tests.py --regression`):
+
+- **R-SOAK-01** (`run_soak_sim.py`): repeated subprocess `run-suite` crash/stability check
+- **R-SOAK-02** (`run_soak_inprocess.py`): in-process `repeat_count` soak with RSS and
+  `resource_cache` growth bounds
+
 The pytest tiers are:
 
-- `tests/unit`: isolated behavior and data contracts
+- `tests/unit`: isolated behavior and data specifications
 - `tests/integration`: runtime, configuration, plugin registration, and evidence
   lifecycle
 - `tests/e2e`: CLI and suite subprocess behavior (black-box framework
@@ -21,7 +28,7 @@ The pytest tiers are:
 **E2E behavioral spec:** [`e2e-spec.md`](e2e-spec.md) lists requirement IDs,
 acceptance
 criteria, fixtures, and test names. Use it for test-driven development or
-reimplementation of the framework contract.
+reimplementation of the framework specification.
 
 `tests/support/core_api.py` is the intentionally small decorated API used for
 runtime

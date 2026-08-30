@@ -6,7 +6,8 @@ installed plugins, then finalize with ``col.endex()``.
 
 ::
 
-   colosseum run my_test.py --config bench.toml
+   colosseum run my_test.py -g config.toml
 
-See :doc:`writing_test_scripts` for a full walkthrough with matching bench TOML and
-metadata YAML. Extension authors should start with :doc:`plugins`.
+See :doc:`running_tests` for CLI flags and :doc:`writing_test_scripts` for a full
+walkthrough with matching config TOML and metadata YAML. Extension authors should
+start with :doc:`plugins`.
