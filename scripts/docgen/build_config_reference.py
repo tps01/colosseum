@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate bench TOML config reference RST from plugin ConfigSectionSpec."""
+"""Generate config TOML reference RST from plugin ConfigSectionSpec."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def _format_keys(keys: tuple[str, ...]) -> str:
 
 
 def build_config_reference_rst(*, output_path: Path) -> Path:
-    """Generate bench TOML config reference RST from plugin ``ConfigSectionSpec``.
+    """Generate config TOML reference RST from plugin ``ConfigSectionSpec``.
 
     :param output_path: Destination RST file path.
     :type output_path: Path
@@ -87,7 +87,7 @@ def build_config_reference_rst(*, output_path: Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point for bench configuration reference generation.
+    """CLI entry point for config reference generation.
 
     :param argv: Optional argument vector (defaults to ``sys.argv[1:]``).
     :type argv: list[str] | None, optional
@@ -95,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     :returns: Process exit code (``0`` on success).
     :rtype: int
     """
-    parser = argparse.ArgumentParser(description="Generate bench config reference RST")
+    parser = argparse.ArgumentParser(description="Generate config reference RST")
     parser.add_argument(
         "--output",
         type=Path,

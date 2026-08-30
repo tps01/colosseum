@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.support.e2e_contracts import (
+from tests.support.e2e_specifications import (
     assert_run_artifacts,
     run_cli,
     run_python_script,
@@ -17,8 +17,8 @@ CLI_NO_ENDEX = REPO / "tests" / "fixtures" / "scripts" / "cli_no_endex_test.py"
 
 
 @pytest.mark.requirement("E2E-DIR-01")
-def test_direct_python_matches_cli_contract(core_config, isolated_cwd, subprocess_env) -> None:
-    """python script.py with load_config and col.endex() matches the CLI artifact contract."""
+def test_direct_python_matches_cli_specification(core_config, isolated_cwd, subprocess_env) -> None:
+    """python script.py with load_config and col.endex() matches the CLI artifact specification."""
     proc = run_python_script(OPTIONAL_FAIL, isolated_cwd, subprocess_env)
     assert proc.returncode == 0, proc.stderr
     run_dir = latest_output_dir(isolated_cwd)

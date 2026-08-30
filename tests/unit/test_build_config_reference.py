@@ -1,4 +1,4 @@
-"""Docgen bench config reference generation."""
+"""Docgen config reference generation."""
 
 from __future__ import annotations
 

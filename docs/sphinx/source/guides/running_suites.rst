@@ -25,11 +25,20 @@ iteration (teardown follows immediately).
 
 Run a suite with::
 
-   colosseum run-suite suites/smoke.toml --config config/bench.toml
+   colosseum run-suite suites/smoke.toml --config config/config.toml
 
-Pass ``--metadata config/metadata.yaml`` when test slots should export WATS reports with
-identity fields from YAML. Without metadata, each test slot still writes a best-effort
-WATS JSON file using runtime defaults.
+Pass ``--metadata config/metadata.yaml`` when test slots should include metadata identity
+fields in their JSON test reports. Without metadata, each test slot still writes a
+best-effort report using runtime defaults.
+
+Suite CLI options
+-----------------
+
+Suites accept the shared path and config flags documented in :doc:`running_tests`
+(``-i``, ``-o``, ``-g``, ``-m``, ``-d``, ``--no-artifacts``). Suites also accept
+``-p/--procedure``, which runs **test** slots in procedure mode (commands and
+measurements only; verifications are skipped). Setup, ``between_tests``, and teardown
+slots are unaffected.
 
 Worked example: between two tests
 ---------------------------------
@@ -89,7 +98,7 @@ standalone ``colosseum run`` (``debug.log``, ``execution.sqlite``, ``summary.txt
 ``wats_<datetime>_<script>.json``, and a ``-pass`` / ``-fail`` directory rename).
 Supporting slots (setup, ``between_tests``, teardown) keep a timestamped folder without a
 result suffix. They write ``debug.log`` and ``execution.sqlite`` only. They do not write
-``summary.txt``, ``summary.json``, or WATS JSON.
+``summary.txt``, ``summary.json``, or the JSON test report.
 
 Suite pass/fail is determined **only from test script slots**. Setup, ``between_tests``,
 and teardown outcomes are recorded in their slot folders but do not change the suite

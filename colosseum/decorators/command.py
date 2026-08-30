@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from colosseum.database import CommandRow
 
-from ._common import ensure_runtime_context, resolve_command, resolve_domain
+from ._common import ensure_runtime_context, resolve_command, resolve_domain, should_skip_command
 from ._kernel import log_evidence, log_evidence_error, record_error_event, short_repr
 from ._typing import ParamSpec
 
@@ -46,6 +46,8 @@ def command(_func: Callable[..., Any] | None = None) -> object:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             ctx = ensure_runtime_context()
+            if should_skip_command(ctx):
+                return None
             key = str(kwargs.get("key", ""))
             optional = bool(kwargs.get("optional", False))
             call_kwargs = dict(kwargs)

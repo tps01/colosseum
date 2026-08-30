@@ -1,0 +1,3 @@
+name = "procedure_suite"
+
+tests = ["../scripts/optional_fail_test.py"]

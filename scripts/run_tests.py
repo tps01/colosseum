@@ -34,7 +34,13 @@ def main() -> int:
         "--soak-count",
         type=int,
         default=10,
-        help="Iterations for sim soak when --regression (default 10; CI soak job uses 5)",
+        help="Iterations for subprocess soak when --regression (default 10; CI uses 5)",
+    )
+    parser.add_argument(
+        "--inprocess-repeat",
+        type=int,
+        default=50,
+        help="repeat_count for in-process soak when --regression (default 50)",
     )
     args, pytest_argv = parser.parse_known_args()
     if pytest_argv and pytest_argv[0] == "--":
@@ -59,6 +65,7 @@ def main() -> int:
 
     for script, extra in (
         ("run_soak_sim.py", ("--count", str(args.soak_count))),
+        ("run_soak_inprocess.py", ("--repeat", str(args.inprocess_repeat))),
         ("run_docgen_check.py", ()),
     ):
         code = _run_regression_script(script, *extra)

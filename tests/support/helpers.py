@@ -24,6 +24,14 @@ def run_endex_expect_code(expected: int) -> None:
     assert code == expected, f"expected exit {expected}, got {code}"
 
 
+def latest_run_in(root: Path) -> Path:
+    """Return the newest run directory directly under ``root``."""
+    assert root.is_dir(), f"output root was not created: {root}"
+    runs = sorted(root.glob("*"), key=lambda path: path.stat().st_mtime, reverse=True)
+    assert runs, f"output root is empty: {root}"
+    return runs[0]
+
+
 def latest_output_dir(cwd: Path) -> Path:
     """Return the newest top-level entry under ``outputs/`` (usually a suite container)."""
     outputs = cwd / "outputs"

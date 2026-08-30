@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from colosseum.database import VerificationRow
 
-from ._common import ensure_runtime_context, resolve_command, resolve_domain
+from ._common import ensure_runtime_context, resolve_command, resolve_domain, should_skip_verification
 from ._kernel import log_evidence, log_evidence_error
 from ._typing import ParamSpec
 from .command import COLOSSEUM_DECORATOR
@@ -81,6 +81,8 @@ def verification(_func: Callable[..., Any] | None = None) -> object:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             ctx = ensure_runtime_context()
+            if should_skip_verification(ctx):
+                return None
             key = kwargs.get("key")
             optional = bool(kwargs.get("optional", False))
             step_name = kwargs.get("step_name")

@@ -1,4 +1,4 @@
-"""Relax bench/suite TOML: bare words on the RHS of ``key = value`` become strings."""
+"""Relax config/suite TOML: bare words on the RHS of ``key = value`` become strings."""
 
 from __future__ import annotations
 

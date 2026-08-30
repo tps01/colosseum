@@ -70,7 +70,7 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 
-# Local secrets and overrides (bench configs may reference keys/passwords)
+# Local secrets and overrides (config files may reference keys/passwords)
 .env
 .env.*
 !.env.example

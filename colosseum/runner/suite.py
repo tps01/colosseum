@@ -7,6 +7,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Callable
 
 from colosseum.config.toml_relaxed import read_relaxed_toml
+from colosseum.runner.run_options import RunOptions
 from colosseum.runner.runtime import (
     begin_script_slot,
     ensure_suite_runtime_ready,
@@ -318,21 +319,25 @@ def run_suite(
     *,
     debug: bool = False,
     no_artifacts: bool = False,
+    run_options: RunOptions | None = None,
 ) -> int:
     from colosseum.config import load_config
     from colosseum.config.metadata import load_metadata
     from colosseum.context import get_context, init_context
     from colosseum.results.exit_policy import finalize_suite
+    from colosseum.runner.run_options import RunOptions
 
     from .single_test import ScriptRunError, run_script
 
     suite = load_suite_toml(suite_path)
+    options = run_options or RunOptions()
     init_context(
         test_case_name=suite.name,
         suite_name=suite.name,
         config_path=config_path.resolve() if config_path else None,
         metadata_path=metadata_path.resolve() if metadata_path else None,
         no_artifacts=no_artifacts,
+        run_options=options,
     )
     ctx = get_context()
     ctx.debug_logging = debug

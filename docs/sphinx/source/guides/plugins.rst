@@ -24,7 +24,7 @@ Overview
      - ``@command`` / ``@measurement`` / ``@verification``
      - When you need evidence
    * - 2
-     - ``ConfigSectionSpec`` and bench TOML rows
+     - ``ConfigSectionSpec`` and config TOML rows
      - When you own config sections
    * - 3
      - Validators, shutdown hooks, connection helpers
@@ -81,17 +81,17 @@ Greenfield plugins need a full project file, not only the entry point::
    build-backend = "setuptools.build_meta"
 
    [project]
-   name = "acme-bench"
+   name = "acme"
    version = "0.1.0"
    description = "My Colosseum extension"
    requires-python = ">=3.9"
    dependencies = ["colosseum-core>=0.15,<0.17"]
 
    [project.entry-points."colosseum.plugins"]
-   acme = "acme_bench:register"
+   acme = "acme:register"
 
    [tool.setuptools.packages.find]
-   include = ["acme_bench*"]
+   include = ["acme*"]
 
 Keep heavy imports inside ``register()`` so importing the package stays lightweight.
 
@@ -106,6 +106,9 @@ Layer 1: Evidence decorators
 
 Use ``command``, ``measurement``, and ``verification`` from ``colosseum.decorators``
 when you need recorded pass/fail evidence. See :doc:`measurements_verifications`.
+Define decorated plugin functions with keyword-only parameters (``def fn(*, ...)``)
+so test scripts are immediately readable to people less familiar with Python:
+``expected_val=5``, ``units="V"``, and ``tolerance=0.5`` show intent at the call site.
 
 ``register_namespace`` sets the evidence domain on the **module** passed to it when that
 module has no ``__colosseum_domain__``. Decorators on functions in a separate
@@ -163,8 +166,8 @@ End users call these from test scripts (see :doc:`writing_test_scripts`)::
    col.template.measure_widget_count(device_id=1, key="widgets")
    col.template.verify_widget_count(key="widgets", expected_val=10.0, tolerance=0.0)
 
-Layer 2: Bench configuration
-----------------------------
+Layer 2: Configuration
+----------------------
 
 Only plugins that own TOML sections need this. See :doc:`configuration` for load
 behavior. Each ``ConfigSectionSpec`` is one table type:
@@ -188,16 +191,15 @@ Register the spec in ``register()`` before ``register_namespace``::
    registry.register_namespace("template", api)
 
 Document matching rows for end users. Integer fields such as ``device_id`` and
-``port`` must be TOML integers. **bench.toml**::
+``port`` must be TOML integers. **config.toml**::
 
-   [[template.device]]
+   [template.device]
    device_id = 1
    serial = "TEMPLATE-001"
    # label = "optional field"
 
 Unknown keys in plugin config sections are ignored at runtime. Missing required keys raise when the row is loaded
-with ``require_item``. Registered section keys appear in the generated bench
-configuration reference when the plugin is installed during a core docs build.
+with ``require_item``. Document section keys and example rows in your plugin README.
 
 Layer 3: Resources and extras
 -----------------------------
@@ -242,7 +244,7 @@ End-to-end checklist
 3. Implement ``api.py`` with decorators (Layer 1) and optional ``ConfigSectionSpec`` (Layer 2).
 4. ``pip install -e .`` in the same environment as ``colosseum-core``.
 5. Run ``python examples/smoke_test.py`` or
-   ``colosseum run examples/smoke_test.py --config configs/bench.template.toml``.
+   ``colosseum run examples/smoke_test.py --config configs/config.template.toml``.
 6. Build a wheel with ``python -m build`` when ready to publish.
 
 Files to document for end users
@@ -250,13 +252,13 @@ Files to document for end users
 
 Plugin authors should ship (or document) the same files shown in :doc:`writing_test_scripts`:
 
-**bench.toml** (plugin device rows)::
+**config.toml** (plugin device rows)::
 
-   [[template.device]]
+   [template.device]
    device_id = 1
    serial = "LAB-DUT-001"
 
-**metadata.yaml** (optional WATS identity)::
+**metadata.yaml** (optional run identity)::
 
    test_metadata:
      location: TBD_PHYSICAL_LOCATION
@@ -272,7 +274,7 @@ Plugin authors should ship (or document) the same files shown in :doc:`writing_t
    import colosseum as col
 
    def main() -> None:
-       col.config.load_config("bench.toml")
+       col.config.load_config("config.toml")
        col.template.arm_device(device_id=1)
        col.template.measure_widget_count(device_id=1, key="widgets")
        col.template.verify_widget_count(key="widgets", expected_val=10.0, tolerance=0.0)
@@ -296,7 +298,7 @@ Troubleshooting
    * - ``Configuration is not loaded``
      - Call ``col.config.load_config(path)`` first
    * - Missing required keys
-     - Bench TOML row incomplete for your ``ConfigSectionSpec``
+     - Config TOML row incomplete for your ``ConfigSectionSpec``
    * - ``Config section … is already registered``
      - Two plugins claim the same section
    * - ``AttributeError`` on ``col.yournamespace``

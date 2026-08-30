@@ -139,7 +139,7 @@ often better than one that adds 200.
 user-facing docs,
 `docs/testing/e2e-spec.md`, and existing e2e tests. Everything else is fair game
 for
-consolidation. Device drivers, bench TOML export, and transport helpers belong
+consolidation. Device drivers, config TOML export, and transport helpers belong
 in plugins.
 
 **Static analysis dependencies.** Do not cap versions of ruff, mypy, bandit, or

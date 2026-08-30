@@ -1,4 +1,4 @@
-"""Record active output_dir name during main() for e2e finalize contract."""
+"""Record active output_dir name during main() for e2e finalize specification."""
 
 from __future__ import annotations
 

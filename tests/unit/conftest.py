@@ -131,10 +131,10 @@ def io_runtime_context(
 
 @pytest.fixture
 def io_bench(tmp_path: Path):
-    """Write a bench TOML snippet under ``tmp_path`` and return its path."""
+    """Write a config TOML snippet under ``tmp_path`` and return its path."""
 
     def _write(body: str) -> Path:
-        path = tmp_path / "bench.toml"
+        path = tmp_path / "config.toml"
         path.write_text(body.strip() + "\n", encoding="utf-8")
         return path
 

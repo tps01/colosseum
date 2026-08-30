@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from .database import DatabaseManager
 from .results.aggregation import ResultAggregator
+from .runner.run_options import ExecutionMode, RunOptions
 
 if TYPE_CHECKING:
     import logging
@@ -54,6 +55,8 @@ class RuntimeContext:
     metadata_yaml: dict[str, Any] = field(default_factory=dict)
     metadata_path: str | None = None
     started_at: datetime | None = None
+    run_options: RunOptions = field(default_factory=RunOptions)
+    active_execution_mode: ExecutionMode = "full"
 
 
 def get_context() -> RuntimeContext:
@@ -94,6 +97,7 @@ def init_context(
     metadata_path: Path | str | None = None,
     no_artifacts: bool = False,
     auto_finalize: bool = False,
+    run_options: RunOptions | None = None,
 ) -> RuntimeContext:
     from datetime import timezone
 
@@ -115,6 +119,10 @@ def init_context(
         auto_finalize=auto_finalize,
         metadata_path=str(Path(metadata_path).resolve()) if metadata_path else None,
         started_at=datetime.now(timezone.utc).astimezone(),
+        run_options=run_options if run_options is not None else RunOptions(),
+        active_execution_mode=(
+            run_options.execution_mode if run_options is not None else "full"
+        ),
     )
     if auto_finalize:
         from .results.exit_policy import register_auto_finalize_hooks

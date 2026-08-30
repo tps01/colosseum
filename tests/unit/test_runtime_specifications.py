@@ -1,4 +1,4 @@
-"""Characterization of runtime contracts that cleanup must preserve."""
+"""Characterization of runtime specifications that cleanup must preserve."""
 
 from __future__ import annotations
 

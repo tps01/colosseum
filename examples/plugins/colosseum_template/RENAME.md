@@ -22,13 +22,13 @@ bottom.
   optional config section, logger
 4. `your_package/api.py` — domain in `get_measurement(...)`, logger name,
   docstrings
-5. `configs/bench.template.toml` — rename file if desired; update
-  `[[yournamespace.device]]`
+5. `configs/config.template.toml` — rename file if desired; update
+  `[yournamespace.device]` or `[[yournamespace.device]]` rows
 6. `examples/smoke_test.py` — config path and API calls
 7. This README and `RENAME.md` — update or remove template-specific paths
 
 Each `ConfigSectionSpec` has exactly one dotted path, exactly one id field, and
-any number of required/optional keys. If you drop Layer 2 (no bench config),
+any number of required/optional keys. If you drop Layer 2 (no config sections),
 remove `register_config_section`, the TOML sample, and config lookups in the
 API.
 

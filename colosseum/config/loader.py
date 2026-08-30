@@ -28,7 +28,7 @@ class ConfigError(RuntimeError):
 
 @dataclass
 class ConfigStore:
-    """Loaded bench TOML: raw nested dict plus ID-indexed plugin sections."""
+    """Loaded config TOML: raw nested dict plus ID-indexed plugin sections."""
 
     _raw: dict[str, Any]
     _normalized: dict[str, dict[int, dict[str, Any]]]

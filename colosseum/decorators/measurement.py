@@ -7,7 +7,12 @@ from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from colosseum.database import MeasurementRow
 
-from ._common import ensure_runtime_context, resolve_command, resolve_domain
+from ._common import (
+    ensure_runtime_context,
+    resolve_command,
+    resolve_domain,
+    should_skip_measurement,
+)
 from ._kernel import log_evidence, log_evidence_error, record_error_event, short_repr
 from ._typing import ParamSpec
 from .command import COLOSSEUM_DECORATOR
@@ -43,6 +48,8 @@ def measurement(
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             ctx = ensure_runtime_context()
+            if should_skip_measurement(ctx):
+                return None
             key = kwargs.get("key")
             if not key:
                 raise MeasurementKeyError(f"`{command}` requires `key=`")

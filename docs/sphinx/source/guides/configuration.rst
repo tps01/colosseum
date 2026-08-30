@@ -1,14 +1,14 @@
 Configuration
 =============
 
-Core reads one bench TOML file. Installed plugins declare the sections they own.
+Core reads one TOML config file. Installed plugins declare the sections they own.
 Core itself does not define instrument or device keys.
 
-The :doc:`writing_test_scripts` walkthrough uses ``[[template.device]]`` rows from the
+The :doc:`writing_test_scripts` walkthrough uses a ``[template.device]`` table from the
 ``colosseum_template`` plugin. The rules below apply to any plugin section.
 
-Section contract
-----------------
+Configuration sections
+----------------------
 
 Each registered section is one ``ConfigSectionSpec``:
 
@@ -53,10 +53,11 @@ Load configuration before calling plugin APIs::
 
    import colosseum as col
 
-   col.config.load_config("bench.toml")
+   col.config.load_config("config.toml")
 
-or ``colosseum run my_test.py --config bench.toml``. That discovers plugins,
-normalizes registered sections, then attaches a config store to the run.
+or ``colosseum run my_test.py -g config.toml`` (``-g`` is the legacy short form of
+``--config``). That discovers plugins, normalizes registered sections, then attaches a
+config store to the run.
 
 Reading rows
 ------------
@@ -73,12 +74,12 @@ Plain string tokens may omit quotes when they contain only supported path/token
 characters. Standard TOML quoting remains recommended for portable configuration.
 
 Suite TOML (``colosseum run-suite``) lists scripts. It is not a plugin section
-file; pass bench config separately with ``--config``.
+file; pass config separately with ``--config``.
 
-Core WATS metadata (``[colosseum.metadata]``)
-----------------------------------------------
+Run metadata (``[colosseum.metadata]``)
+---------------------------------------
 
-Core owns a flat singleton table for WATS report identity fields. It is **not**
+Core owns a flat singleton table for test-report identity fields. It is **not**
 a plugin ``ConfigSectionSpec`` (no integer ID field). Unknown keys produce
 warnings.
 
@@ -96,24 +97,23 @@ warnings.
 
 The same keys may appear in a metadata YAML file (``test_metadata:`` block).
 Load YAML with ``col.config.load_metadata("metadata.yaml")`` or
-``colosseum run my_test.py --metadata metadata.yaml``.
+``colosseum run my_test.py -m metadata.yaml`` (``-m`` is the short form of
+``--metadata``).
 
 Metadata precedence
 ~~~~~~~~~~~~~~~~~~~
 
-1. Values from ``[colosseum.metadata]`` in bench TOML (if present).
+1. Values from ``[colosseum.metadata]`` in config TOML (if present).
 2. YAML ``test_metadata`` overrides TOML when both are loaded.
 3. Runtime defaults (hostname, OS user, empty identity fields) fill any remaining gaps.
 
 Finalize writes ``wats_<datetime>_<script>.json`` beside ``summary.json`` (see
-:doc:`output_artifacts`). Without metadata, the WATS report is still written using
-those defaults.
+:doc:`output_artifacts`). That file uses the WATS WSJF JSON format. Without
+metadata, Colosseum still writes the report using runtime defaults.
 
 Optional keys (never required) may enrich the report when set in YAML:
 ``process_name``, ``report_text``, ``seq_version``, ``batch_serial``,
 ``fixture_id``, ``comment``, ``misc_infos``, and ``sub_units``. Existing
 metadata files without these keys continue to work unchanged.
 
-The generated :doc:`bench_config_reference` lists sections provided by the plugins
-installed in the documentation build environment. A core-only build therefore contains
-no plugin sections.
+Plugin-owned config sections are documented by each plugin (README or project docs).

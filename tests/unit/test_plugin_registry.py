@@ -1,4 +1,4 @@
-"""U-PLG-01: plugin registry contracts."""
+"""U-PLG-01: plugin registry specifications."""
 
 from __future__ import annotations
 

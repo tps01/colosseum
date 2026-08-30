@@ -18,7 +18,7 @@ API ``col.template.*``). Install it when following the walkthroughs::
 
 Or install the template wheel from a local build alongside core (versions must match)::
 
-   pip install colosseum_core-0.16.0-py3-none-any.whl colosseum_template-0.1.0-py3-none-any.whl
+   pip install colosseum_core-0.16.1-py3-none-any.whl colosseum_template-0.1.0-py3-none-any.whl
 
 The desktop runner (``colosseum --gui``) is included with the core install.
 
@@ -28,8 +28,8 @@ One install covers runtime, tests, static analysis, and docs tooling::
 
 Python 3.9 and newer are supported.
 
-Offline / air-gapped
---------------------
+Offline
+-------
 
 Offline installs are a first-class workflow. Build a wheelhouse on a networked twin
 (same OS, architecture, and Python version as the target), then install with

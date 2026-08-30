@@ -15,7 +15,7 @@ def test_build_argv_includes_metadata_flag(tmp_path: Path) -> None:
         RunRequest(
             RunKind.TEST,
             script,
-            config_path="bench.toml",
+            config_path="config.toml",
             metadata_path="meta.yaml",
             debug=True,
         )

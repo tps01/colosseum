@@ -1,4 +1,4 @@
-"""Black-box artifact contracts for subprocess e2e tests."""
+"""Black-box artifact specifications for subprocess e2e tests."""
 
 from __future__ import annotations
 

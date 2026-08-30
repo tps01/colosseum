@@ -9,7 +9,7 @@ the user explicitly requests it.
 `colosseum-core` owns the runtime only:
 
 - decorators and result aggregation
-- configuration and plugin contracts
+- configuration and plugin specifications
 - test/suite runners and optional GUI
 - SQLite evidence, output paths, artifacts, logging, and summaries
 - user documentation (guides + generated config reference)
@@ -39,8 +39,8 @@ Before implementation:
   scope.
 2. **Inventory** — Search for existing modules/helpers; merge or extend instead
   of duplicating.
-3. **Delete first** — Prefer removing or consolidating code when the user
-  contract allows.
+3. **Delete first** — Prefer removing or consolidating code when the public
+  specification allows.
    Protected behavior: decorators, CLI, suite scheduling, standard output
 artifacts, and
    plugin entry points (see `docs/testing/e2e-spec.md` and user guides).
@@ -62,6 +62,7 @@ python -m pip install -e .
 python scripts/run_tests.py
 python scripts/run_static.py
 python tests/regression/run_soak_sim.py --count 5
+python tests/regression/run_soak_inprocess.py --repeat 50
 python tests/regression/run_docgen_check.py --skip-pdf
 python -m build
 ```

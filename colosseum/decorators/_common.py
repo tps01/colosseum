@@ -75,3 +75,15 @@ def ensure_runtime_context() -> RuntimeContext:
     ctx = get_context()
     ensure_runtime_ready(ctx)
     return ctx
+
+
+def should_skip_command(ctx: RuntimeContext) -> bool:
+    return ctx.active_execution_mode == "verify_only"
+
+
+def should_skip_measurement(ctx: RuntimeContext) -> bool:
+    return ctx.active_execution_mode == "verify_only"
+
+
+def should_skip_verification(ctx: RuntimeContext) -> bool:
+    return ctx.active_execution_mode == "procedure"
