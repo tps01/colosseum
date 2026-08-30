@@ -7,7 +7,6 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Callable
 
 from colosseum.config.toml_relaxed import read_relaxed_toml
-from colosseum.runner.run_options import RunOptions
 from colosseum.runner.runtime import (
     begin_script_slot,
     ensure_suite_runtime_ready,
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from colosseum.context import RuntimeContext
+    from colosseum.runner.run_options import RunOptions
 
 try:
     import tomllib

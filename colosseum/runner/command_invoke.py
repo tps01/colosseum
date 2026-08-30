@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ast
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from colosseum.decorators.command import COLOSSEUM_DECORATOR
 from colosseum.plugins.loader import ensure_plugins_loaded
@@ -75,10 +75,10 @@ def resolve_plugin_command(namespace: str, function: str) -> Callable[..., Any]:
         ) from exc
     if getattr(callable_obj, COLOSSEUM_DECORATOR, None) != "command":
         raise CommandInvokeError(f"{namespace}.{function} is not a @command")
-    return callable_obj
+    return cast("Callable[..., Any]", callable_obj)
 
 
-def invoke_plugin_commands(ctx: RuntimeContext, specs: list[str]) -> None:
+def invoke_plugin_commands(_ctx: RuntimeContext, specs: list[str]) -> None:
     """Invoke one or more plugin commands in the active runtime context."""
     for spec in specs:
         namespace, function, kwargs = parse_plugin_command(spec)

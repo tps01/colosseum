@@ -8,7 +8,12 @@ from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from colosseum.database import VerificationRow
 
-from ._common import ensure_runtime_context, resolve_command, resolve_domain, should_skip_verification
+from ._common import (
+    ensure_runtime_context,
+    resolve_command,
+    resolve_domain,
+    should_skip_verification,
+)
 from ._kernel import log_evidence, log_evidence_error
 from ._typing import ParamSpec
 from .command import COLOSSEUM_DECORATOR

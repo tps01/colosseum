@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from colosseum.database import CommandRow, MeasurementRow
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from colosseum.context import RuntimeContext
 
 _MEASUREMENT_COLUMNS = (
     "domain",
@@ -81,32 +87,26 @@ def import_evidence_from_previous(ctx: object, previous_dir: Path) -> None:
 
 def _copy_table_rows(
     source: sqlite3.Connection,
-    ctx: object,
+    ctx: RuntimeContext,
     table: str,
     columns: tuple[str, ...],
-    inserter: object,
+    inserter: Callable[[RuntimeContext, dict[str, object]], None],
 ) -> None:
-    from colosseum.context import RuntimeContext
-
-    if not isinstance(ctx, RuntimeContext):
-        raise TypeError("ctx must be a RuntimeContext")
     column_sql = ", ".join(columns)
     rows = source.execute(f"SELECT {column_sql} FROM {table} ORDER BY id ASC").fetchall()  # noqa: S608
     for row in rows:
-        inserter(ctx, dict(zip(columns, row, strict=True)))
+        if len(row) != len(columns):
+            raise ValueError(f"row length {len(row)} != column count {len(columns)}")
+        inserter(ctx, dict(zip(columns, row)))
 
 
-def _insert_measurement_row(ctx: object, row: dict[str, object]) -> None:
-    from colosseum.context import RuntimeContext
-
-    if not isinstance(ctx, RuntimeContext):
-        raise TypeError("ctx must be a RuntimeContext")
+def _insert_measurement_row(ctx: RuntimeContext, row: dict[str, object]) -> None:
     ctx.db.insert_measurement(
         MeasurementRow(
             domain=str(row["domain"]),
             command=str(row["command"]),
             key=str(row["key"]),
-            row_index=int(row["row_index"]),  # type: ignore[arg-type]
+            row_index=int(row["row_index"]),  # type: ignore[call-overload]
             value=_loads_json_value(row["value_json"]),
             units=row["units"],  # type: ignore[arg-type]
             artifact_path=row["artifact_path"],  # type: ignore[arg-type]
@@ -116,11 +116,7 @@ def _insert_measurement_row(ctx: object, row: dict[str, object]) -> None:
     )
 
 
-def _insert_command_row(ctx: object, row: dict[str, object]) -> None:
-    from colosseum.context import RuntimeContext
-
-    if not isinstance(ctx, RuntimeContext):
-        raise TypeError("ctx must be a RuntimeContext")
+def _insert_command_row(ctx: RuntimeContext, row: dict[str, object]) -> None:
     ctx.db.insert_command(
         CommandRow(
             domain=str(row["domain"]),
@@ -139,5 +135,5 @@ def _loads_json_value(value: object) -> object | None:
     if value is None:
         return None
     if isinstance(value, (str, bytes, bytearray)):
-        return json.loads(value)
+        return json.loads(value)  # type: ignore[no-any-return]
     raise TypeError(f"unexpected JSON column value: {type(value)!r}")

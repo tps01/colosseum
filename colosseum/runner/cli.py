@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from colosseum.config import ConfigError, load_config
-from colosseum.context import get_context, init_context
+from colosseum.context import init_context
 from colosseum.database.evidence_import import import_evidence_from_previous
 from colosseum.results.exit_policy import endex
 from colosseum.runner.command_invoke import (
@@ -14,8 +14,8 @@ from colosseum.runner.command_invoke import (
     command_logical_name,
     invoke_plugin_commands,
 )
+from colosseum.runner.run_options import ExecutionMode, RunOptions, resolve_input_path
 from colosseum.runner.runtime import ensure_runtime_ready
-from colosseum.runner.run_options import RunOptions, resolve_input_path
 
 from .single_test import ScriptRunError, run_script
 from .suite import SuiteError, run_suite
@@ -183,7 +183,7 @@ def _load_run_config(config_path: str | None, metadata_path: str | None = None) 
 
 
 def _shared_run_options(args: argparse.Namespace) -> RunOptions:
-    execution_mode = "full"
+    execution_mode: ExecutionMode = "full"
     if getattr(args, "procedure", False):
         execution_mode = "procedure"
     elif getattr(args, "previous_output_dir", None) is not None:
@@ -205,7 +205,7 @@ def _shared_run_options(args: argparse.Namespace) -> RunOptions:
     )
 
 
-def _maybe_enable_faulthandler(show_faults: bool) -> None:
+def _maybe_enable_faulthandler(*, show_faults: bool) -> None:
     if show_faults:
         faulthandler.enable()
 
@@ -274,7 +274,7 @@ def run_cli(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         run_options = _shared_run_options(args)
-        _maybe_enable_faulthandler(run_options.show_faults)
+        _maybe_enable_faulthandler(show_faults=run_options.show_faults)
         if not args.test_file and not run_options.plugin_commands:
             parser.error("run requires a test_file and/or at least one -c/--command")
         test_path = None
