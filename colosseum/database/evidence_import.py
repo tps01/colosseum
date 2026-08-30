@@ -93,7 +93,9 @@ def _copy_table_rows(
     inserter: Callable[[RuntimeContext, dict[str, object]], None],
 ) -> None:
     column_sql = ", ".join(columns)
-    rows = source.execute(f"SELECT {column_sql} FROM {table} ORDER BY id ASC").fetchall()  # noqa: S608
+    rows = source.execute(
+        f"SELECT {column_sql} FROM {table} ORDER BY id ASC",  # nosec B608  # columns/table validated
+    ).fetchall()
     for row in rows:
         if len(row) != len(columns):
             raise ValueError(f"row length {len(row)} != column count {len(columns)}")
