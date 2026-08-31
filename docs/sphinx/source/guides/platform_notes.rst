@@ -34,9 +34,9 @@ SSH X11 forwarding (``ssh -X``) still requires Tk on the Linux side and a workin
 Documentation
 -------------
 
-HTML documentation requires only the ``docs`` extra. PDF generation additionally needs
-``latexmk`` and a TeX distribution. Use ``python scripts/docgen/build_all.py --skip-pdf``
-for an HTML-only build.
+The Sphinx **PDF** is the primary manual and needs ``latexmk`` plus a TeX
+distribution. HTML is a backup of the same sources
+(``python scripts/docgen/build_all.py --skip-pdf``).
 
 Hardware permissions, native libraries, and driver runtimes are plugin concerns and
 should be documented by the plugin that needs them.

@@ -21,7 +21,7 @@ Only the following licenses are allowed:
 - X License
 - MIT/X Consortium License
 - Historical Permission Notice and Disclaimer (HPND)
-- GNU Lesser General Public License (LGPL) — allowed only when used unmodified
+- GNU Lesser General Public License (LGPL) - allowed only when used unmodified
   (no source modifications)
 - NASA Open Source Agreement 1.3
 - Public Domain
@@ -99,7 +99,7 @@ deletions** as success criteria, not just “tests pass.”
 or
 exploration notes to: *what must change*, *what must not regress*, and *what is
 out of
-scope*. Do not implement every bullet in a long plan—implement what satisfies
+scope*. Do not implement every bullet in a long plan. Implement what satisfies
 acceptance.
 
 **Inventory before adding.** Search the repo for existing types, helpers, and

@@ -2,8 +2,8 @@
 
 Normative documentation for Colosseum is:
 
-- [docs/scope.md](../scope.md) — implemented behavior and deferred items
-- [docs/sphinx/source/guides/](../sphinx/source/guides/) — user guides (built by
+- [docs/scope.md](../scope.md) - implemented behavior and deferred items
+- [docs/sphinx/source/guides/](../sphinx/source/guides/) - user guides (built by
   docgen)
 - Runtime code, tests, and docs (`python scripts/docgen/build_all.py`)
 

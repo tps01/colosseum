@@ -3,7 +3,10 @@
 Core is independently buildable and testable. Sibling plugin checkouts are not
 required.
 
-## Setup
+This page is **Part 1** (setup and checks). **Part 2** (runtime execution and
+plugin authoring) is later on this page and in the Sphinx PDF manual.
+
+## Part 1: Setup
 
 ```sh
 python -m venv .venv
@@ -26,9 +29,8 @@ python tests/regression/run_docgen_check.py --skip-pdf
 python -m build
 ```
 
-The PDF documentation path additionally needs `latexmk`; CI runs the HTML build
-on every
-change and release automation builds the PDF.
+The PDF is the primary Sphinx manual and needs `latexmk`. CI builds HTML on
+every change as a backup; release automation builds the PDF.
 
 ## Boundaries
 
@@ -40,6 +42,17 @@ change and release automation builds the PDF.
   integration tests.
 - Core may document the plugin specification but must not hard-code first-party
   plugin modules.
+
+## Part 2: Runtime execution and plugins
+
+Sphinx PDF Part 2 (**Developing Colosseum**) is the primary write-up:
+
+- [Runtime execution](sphinx/source/guides/runtime_execution.rst)
+- [Plugins and extensions](sphinx/source/guides/plugins.rst)
+- [Glossary](sphinx/source/guides/glossary.rst) (PDF appendix)
+
+Build the PDF with `python scripts/docgen/build_all.py` (`latexmk` required).
+HTML is the same sources: `python scripts/docgen/build_all.py --skip-pdf`.
 
 ## Releases
 

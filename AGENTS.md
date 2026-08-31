@@ -35,11 +35,11 @@ Follow the workspace **Minimizing footprint** section in the top-level
 `AGENTS.md`.
 Before implementation:
 
-1. **Distill** — Write a 3–5 line pre-flight: goal, protected behavior, out of
+1. **Distill** - Write a 3–5 line pre-flight: goal, protected behavior, out of
   scope.
-2. **Inventory** — Search for existing modules/helpers; merge or extend instead
+2. **Inventory** - Search for existing modules/helpers; merge or extend instead
   of duplicating.
-3. **Delete first** — Prefer removing or consolidating code when the public
+3. **Delete first** - Prefer removing or consolidating code when the public
   specification allows.
    Protected behavior: decorators, CLI, suite scheduling, standard output
 artifacts, and

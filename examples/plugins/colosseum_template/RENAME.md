@@ -16,16 +16,16 @@ bottom.
 ## Files to edit
 
 1. Rename directory `colosseum_template/` → `your_package/`
-2. `pyproject.toml` — `name`, `description`, `dependencies`, entry points,
+2. `pyproject.toml` - `name`, `description`, `dependencies`, entry points,
   `include` glob
-3. `your_package/__init__.py` — `__colosseum_domain__`, namespace string,
+3. `your_package/__init__.py` - `__colosseum_domain__`, namespace string,
   optional config section, logger
-4. `your_package/api.py` — domain in `get_measurement(...)`, logger name,
+4. `your_package/api.py` - domain in `get_measurement(...)`, logger name,
   docstrings
-5. `configs/config.template.toml` — rename file if desired; update
+5. `configs/config.template.toml` - rename file if desired; update
   `[yournamespace.device]` or `[[yournamespace.device]]` rows
-6. `examples/smoke_test.py` — config path and API calls
-7. This README and `RENAME.md` — update or remove template-specific paths
+6. `examples/smoke_test.py` - config path and API calls
+7. This README and `RENAME.md` - update or remove template-specific paths
 
 Each `ConfigSectionSpec` has exactly one dotted path, exactly one id field, and
 any number of required/optional keys. If you drop Layer 2 (no config sections),
