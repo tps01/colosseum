@@ -1,0 +1,22 @@
+@startuml
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam dpi 150
+hide circle
+skinparam classAttributeIconSize 0
+
+class RuntimeContext {
+  config
+  db
+  plugin_registry
+  result_aggregator
+  output_dir
+  resource_cache
+  active_execution_mode
+}
+
+RuntimeContext *-- ConfigStore
+RuntimeContext *-- DatabaseManager
+RuntimeContext *-- PluginRegistry
+RuntimeContext *-- ResultAggregator
+@enduml

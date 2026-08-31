@@ -34,7 +34,12 @@ def test_build_pdf_invokes_sphinx_and_latexmk(tmp_path) -> None:
     assert result == pdf_path
     builders = [call.args[0] for call in run_mock.call_args_list]
     assert any("-b" in cmd and "latex" in cmd for cmd in builders)
-    assert any(cmd[0] == "latexmk" for cmd in builders)
+    latexmk_calls = [call for call in run_mock.call_args_list if call.args[0][0] == "latexmk"]
+    assert latexmk_calls
+    latexmk_cmd = latexmk_calls[0].args[0]
+    assert latexmk_calls[0].kwargs.get("cwd") == latex_dir
+    assert "-cd" not in latexmk_cmd
+    assert "colosseum.tex" in latexmk_cmd
 
 
 def test_require_latex_toolchain_exits_when_missing() -> None:

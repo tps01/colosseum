@@ -39,22 +39,22 @@ CLI options
 
 Shared path and config flags for ``colosseum run`` and ``colosseum run-suite``:
 
-- ``-i/--input-dir PATH`` — base directory for the positional script or suite path
-- ``-o/--output-dir PATH`` — custom output root for timestamped run folders (default:
+- ``-i/--input-dir PATH`` - base directory for the positional script or suite path
+- ``-o/--output-dir PATH`` - custom output root for timestamped run folders (default:
   ``cwd/outputs``)
-- ``-g/--config PATH`` — config TOML (legacy short form)
-- ``-m/--metadata PATH`` — metadata YAML (short form)
-- ``-d/--debug`` — include DEBUG logs on stdout
-- ``--no-artifacts`` — in-memory SQLite and console logging only
+- ``-g/--config PATH`` - config TOML (legacy short form)
+- ``-m/--metadata PATH`` - metadata YAML (short form)
+- ``-d/--debug`` - include DEBUG logs on stdout
+- ``--no-artifacts`` - in-memory SQLite and console logging only
 
 ``colosseum run`` additionally supports:
 
-- ``-c/--command SPEC`` — invoke a plugin ``@command`` (``namespace.function,key=val,...``);
+- ``-c/--command SPEC`` - invoke a plugin ``@command`` (``namespace.function,key=val,...``);
   repeatable; may be used without a script path
-- ``-p/--procedure`` — run commands and measurements; skip verifications
-- ``-u/--use-previous-output PATH`` — import prior measurements/commands from a completed
+- ``-p/--procedure`` - run commands and measurements; skip verifications
+- ``-u/--use-previous-output PATH`` - import prior measurements/commands from a completed
   run directory and re-run verifications only (mutually exclusive with ``-p``)
-- ``--show-faults`` — opt-in ``faulthandler`` crash dumps for this run
+- ``--show-faults`` - opt-in ``faulthandler`` crash dumps for this run
 
 Examples::
 

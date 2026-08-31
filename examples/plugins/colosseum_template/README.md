@@ -21,14 +21,14 @@ only, see first-party `colosseum-shared`.
 
 ---
 
-## Part A — Extension author
+## Part A - Extension author
 
 ### 1. Copy and rename
 
 Copy `examples/plugins/colosseum_template/` elsewhere. Work through
 [RENAME.md](RENAME.md).
 
-### 2. Layer 0 — wire discovery
+### 2. Layer 0 - wire discovery
 
 **`pyproject.toml`:**
 
@@ -54,7 +54,7 @@ package already defines `__colosseum_domain__`.
 Keep heavy imports inside `register()` so importing the package stays
 lightweight.
 
-### 3. Layer 1 — implement the API (this template)
+### 3. Layer 1 - implement the API (this template)
 
 Edit `colosseum_template/api.py`:
 
@@ -126,7 +126,7 @@ Common migration dialogue:
   plugin evidence. Colosseum expects decorated commands,
   measurements, verifications, logs, config sections, and run artifacts.
 
-### 4. Layer 2 — config (this template)
+### 4. Layer 2 - config (this template)
 
 This demo registers **one** `ConfigSectionSpec` and reads it from `arm_device`.
 Each spec is one table type:
@@ -159,12 +159,12 @@ serial = "TEMPLATE-001"
 # label = "optional field"
 ```
 
-### 5. Layer 3 — optional extras
+### 5. Layer 3 - optional extras
 
 Add only when needed:
 
-- `registry.register_config_validator(...)` — warning strings for a section.
-- `registry.register_shutdown(...)` — release resources on `col.endex()`.
+- `registry.register_config_validator(...)` - warning strings for a section.
+- `registry.register_shutdown(...)` - release resources on `col.endex()`.
 - Connection / cache helpers as ordinary module functions (see
   messaging/equipment).
 
@@ -212,7 +212,7 @@ namespace (`equipment`, `shared`, `io`, `host`, `messaging`).
 
 ---
 
-## Part B — End user: install and run
+## Part B - End user: install and run
 
 ### 1. Prerequisites
 
@@ -255,8 +255,8 @@ col.template.verify_power_rail(key="dut_3v3_rail", max_current_a=0.25)
 col.endex()
 ```
 
-- **`col.endex()`** — flush logs/DB, write summaries, exit `0`/`1`.
-- **Utility scripts** — `load_config(..., no_artifacts=True)` or CLI
+- **`col.endex()`** - flush logs/DB, write summaries, exit `0`/`1`.
+- **Utility scripts** - `load_config(..., no_artifacts=True)` or CLI
   `--no-artifacts`.
 
 ### 5. Use via CLI

@@ -1,0 +1,24 @@
+@startuml
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam dpi 150
+hide footbox
+
+actor Operator
+participant CLI
+participant Ctx as "RuntimeContext"
+participant Plugins
+participant Script as "main()"
+participant DB as "execution.sqlite"
+
+Operator -> CLI: colosseum run test.py -g config.toml
+CLI -> Ctx: init_context()
+CLI -> Plugins: load_config() / register()
+CLI -> Ctx: ensure_runtime_ready()
+Ctx -> DB: create schema
+CLI -> Script: run_script()
+Script -> DB: @command / @measurement / @verification
+CLI -> Ctx: endex()
+Ctx -> Ctx: shutdown, summaries, rename
+CLI --> Operator: SystemExit 0 or 1
+@enduml

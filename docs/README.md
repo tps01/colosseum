@@ -6,9 +6,11 @@ can be recovered from git history (see [archive/README.md](archive/README.md)).
 ## Start here
 
 1. [Top-level README](../README.md) (users)
-2. [Developer guide](DEVELOPING.md) (contributors)
+2. [Developer guide](DEVELOPING.md) (contributors; Sphinx PDF Part 2 is
+   [runtime execution](sphinx/source/guides/runtime_execution.rst) and
+   [plugin authoring](sphinx/source/guides/plugins.rst))
 3. [Implementation scope and known gaps](scope.md)
-4. [Sphinx user guides](sphinx/source/guides/)
+4. [Sphinx manual](sphinx/README.md) (PDF primary; HTML backup)
 5. [Testing and regression](testing/README.md)
 6. [Cutting a release](releasing.md)
 7. [Examples](../examples/)
@@ -22,7 +24,10 @@ scripts/docgen/build_all.py`.
 | Document | Description |
 | --- | --- |
 | [../README.md](../README.md) | User-facing overview, install, quickstart |
-| [DEVELOPING.md](DEVELOPING.md) | Clone, editable install, tests, docgen, CI |
+| [DEVELOPING.md](DEVELOPING.md) | Clone, editable install, tests, docgen, CI; Part 2 links to PDF Developing |
+| [sphinx/source/guides/runtime_execution.rst](sphinx/source/guides/runtime_execution.rst) | Runtime execution (PDF Part 2) |
+| [sphinx/source/guides/plugins.rst](sphinx/source/guides/plugins.rst) | Plugin authoring (PDF Part 2) |
+| [sphinx/source/guides/glossary.rst](sphinx/source/guides/glossary.rst) | Glossary appendix |
 | [scope.md](scope.md) | Implement... |
 | [user-doc... | User guide inventory and doc gaps |
 | [sphinx/README.md](sphinx/README.md) | Sphinx/docgen build notes |
@@ -38,6 +43,7 @@ keyword arguments inline. See [examples/](../examples/).
 
 ## CI documentation outputs
 
-- Standard CI builds and uploads a documentation **PDF artifact**.
-- The GitHub Pages workflow is kept in-repo for publishing HTML, but it is
+- The Sphinx **PDF** is the primary manual (release builds it; CI uploads the
+  PDF artifact when `latexmk` is available).
+- HTML is a backup of the same sources. The GitHub Pages workflow is
   manual-only and not part of routine CI.

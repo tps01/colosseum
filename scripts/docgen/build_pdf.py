@@ -72,16 +72,16 @@ def build_pdf(*, site_source: Path, latex_dir: Path, repo_root: Path) -> Path:
         )
     tex_path = _find_main_tex(latex_dir)
     with ci_phase("latexmk"):
+        # Run in latex_dir so Sphinx's latexmkrc is used (makeindex -s python.ist).
         subprocess.run(
             [
                 "latexmk",
                 "-pdf",
                 "-interaction=nonstopmode",
                 "-halt-on-error",
-                "-cd",
-                str(tex_path),
+                tex_path.name,
             ],
-            cwd=repo_root,
+            cwd=latex_dir,
             check=True,
         )
     pdf_path = tex_path.with_suffix(".pdf")

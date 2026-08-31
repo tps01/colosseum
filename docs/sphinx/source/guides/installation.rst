@@ -18,7 +18,7 @@ API ``col.template.*``). Install it when following the walkthroughs::
 
 Or install the template wheel from a local build alongside core (versions must match)::
 
-   pip install colosseum_core-0.16.1-py3-none-any.whl colosseum_template-0.1.0-py3-none-any.whl
+   pip install colosseum_core-0.16.2-py3-none-any.whl colosseum_template-0.1.0-py3-none-any.whl
 
 The desktop runner (``colosseum --gui``) is included with the core install.
 
