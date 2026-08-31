@@ -1,15 +1,17 @@
 # Documentation generation
 
-Build standalone core HTML documentation:
+The PDF is the primary Sphinx manual. HTML is a backup of the same sources.
 
-```sh
-python scripts/docgen/build_all.py --skip-pdf
-```
-
-The full build additionally requires `latexmk`:
+Full build (requires `latexmk`):
 
 ```sh
 python scripts/docgen/build_all.py
+```
+
+HTML only:
+
+```sh
+python scripts/docgen/build_all.py --skip-pdf
 ```
 
 The pipeline copies handwritten guides from `docs/sphinx/source/` and invokes

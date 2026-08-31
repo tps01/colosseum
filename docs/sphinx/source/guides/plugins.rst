@@ -8,6 +8,9 @@ The copy-ready template lives at ``examples/plugins/colosseum_template``.
 A working plugin needs three things at minimum. Config, evidence decorators, and
 resource helpers are optional layers on top.
 
+How a run discovers plugins, records evidence, and finalizes is
+:doc:`runtime_execution`.
+
 Overview
 --------
 

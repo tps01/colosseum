@@ -1,0 +1,21 @@
+@startuml
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam dpi 150
+
+start
+:allocate suite container;
+if (setup scripts?) then (yes)
+  :run setup slots;
+  if (rip_cord and failed?) then (yes)
+    :skip tests;
+  else (no)
+    :run test schedule;
+  endif
+else (no)
+  :run test schedule;
+endif
+:run teardown slots;
+:finalize suite, rename container;
+stop
+@enduml

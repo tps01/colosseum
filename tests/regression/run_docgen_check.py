@@ -32,9 +32,13 @@ def verify_docgen_outputs(*, require_pdf: bool) -> int:
         print(f"DOCGEN FAIL: expected PDF master doc at {index_pdf}", file=sys.stderr)
         return 1
     pdf_index_text = index_pdf.read_text(encoding="utf-8")
-    if "guides/plugins" in pdf_index_text:
-        print("DOCGEN FAIL: index_pdf.rst must not include developer plugin guide", file=sys.stderr)
-        return 1
+    for required in ("guides/plugins", "guides/runtime_execution", "guides/glossary"):
+        if required not in pdf_index_text:
+            print(
+                f"DOCGEN FAIL: index_pdf.rst must include {required} (PDF is the primary manual)",
+                file=sys.stderr,
+            )
+            return 1
     if require_pdf:
         pdf_files = list((REPO / "build" / "docgen" / "site" / "latex").glob("*.pdf"))
         if not pdf_files:

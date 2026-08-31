@@ -1,0 +1,24 @@
+@startuml
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam dpi 150
+hide footbox
+
+participant Script
+participant Wrap as "@measurement"
+participant Func as "plugin function"
+participant DB
+participant Log
+
+Script -> Wrap: measure_...(key=...)
+Wrap -> Wrap: ensure_runtime_ready()
+alt verify_only
+  Wrap --> Script: skip (return None)
+else
+  Wrap -> Func: call
+  Func --> Wrap: value
+  Wrap -> DB: insert_measurement
+  Wrap -> Log: evidence line
+  Wrap --> Script: value
+end
+@enduml
